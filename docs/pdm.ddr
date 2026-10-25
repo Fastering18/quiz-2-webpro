@@ -1,0 +1,157 @@
+Type: PDM
+Title: Sistem Web Fullstack Portal & Classroom ITS
+
+Tables:
+- pengguna [x: 240, y: 142] {
+    user_id: varchar(16) [pk];
+    username: varchar(30) [unique, not null];
+    nama_lengkap: varchar(100) [not null];
+    email: varchar(120) [unique, not null];
+    password_hash: varchar(255) [not null];
+    role: varchar(20) [not null];
+    foto_profil_key: varchar(255) [null];
+    nomor_telepon: varchar(20) [null];
+    alamat_rumah: varchar(255) [null]
+  }
+
+- mahasiswa [x: 130, y: -161] {
+    nrp: varchar(14) [pk];
+    user_id: varchar(16) [not null, unique];
+    nip_wali: varchar(18) [not null];
+    departemen: varchar(80) [not null];
+    semester_aktif: int [not null];
+    status: varchar(20) [not null];
+  }
+
+- dosen [x: -347, y: 120] {
+    nip: varchar(18) [pk];
+    user_id: varchar(16) [not null, unique];
+    departemen: varchar(80) [not null];
+    status: varchar(20) [not null]
+  }
+
+- mata_kuliah [x: -920, y: 400] {
+    kode_mk: varchar(10) [pk];
+    nama_mk: varchar(120) [not null];
+    sks: int [not null];
+    semester: int [not null]
+  }
+
+- krs [x: -290, y: -400] {
+    krs_id: varchar(16) [pk];
+    nrp: varchar(14) [not null];
+    semester: int [not null];
+    semester_tahun: varchar(12) [not null];
+    status_acc: varchar(20) [not null];
+    tanggal_cetak: date [null]
+  }
+
+- detail_krs [x: -920, y: -400] {
+    detail_id: bigint [pk];
+    krs_id: varchar(16) [not null];
+    kelas_id: varchar(12) [not null];
+    nilai_akhir: int [null];
+  }
+
+- classroom [x: -920, y: 120] {
+    kelas_id: varchar(12) [pk];
+    kode_mk: varchar(10) [not null];
+    nip: varchar(18) [not null];
+    nama_kelas: varchar(60) [not null];
+    semester_tahun: varchar(12) [not null];
+    kuota_kelas: int [not null];
+  }
+
+- bagian_kelas [x: -1307, y: -420] {
+    bagian_id: bigint [pk];
+    kelas_id: varchar(12) [not null];
+    urutan: int [not null];
+    judul_bagian: varchar(160) [not null];
+    judul_ringkasan: varchar(160) [null];
+    konten_ringkasan: varchar(5000) [null]
+  }
+
+- pengumuman_classroom [x: -1300, y: 260] {
+  pengumuman_id: bigint [pk];
+  kelas_id: varchar(12) [not null];
+  konten: varchar(2000);
+  # author_id: varchar(16);
+  tanggal_unggah: date [not null];
+}
+
+- materi_kelas [x: -1307, y: -49] {
+    materi_id: bigint [pk];
+    bagian_id: bigint [not null];
+    judul_materi: varchar(160) [not null];
+    nama_file: varchar(255) [not null];
+    file_materi_key: varchar(255) [not null];
+    ukuran_file: int [not null];
+    tanggal_unggah: date [not null]
+  }
+
+- tugas_kelas [x: -610, y: -229] {
+    tugas_id: bigint [pk];
+    bagian_id: bigint [not null];
+    urutan: int [not null];
+    judul_tugas: varchar(160) [not null];
+    deskripsi_tugas: varchar(2000) [null];
+    format_file: varchar(50) [null];
+    tenggat_waktu: datetime [not null]
+  }
+
+- pengumpulan_tugas [x: -245, y: -200] {
+    submit_id: bigint [pk];
+    tugas_id: bigint [not null];
+    nrp: varchar(14) [not null];
+    nama_file: varchar(255) [not null];
+    file_jawaban_key: varchar(255) [not null];
+    ukuran_file: int [not null];
+    komentar: varchar(1000) [null];
+    tanggal_kirim: datetime [not null];
+    nilai_tugas: int [null]
+  }
+
+- perpustakaan [x: 616, y: -128] {
+    buku_id: varchar(12) [pk];
+    judul_buku: varchar(200) [not null];
+    penulis: varchar(160) [not null];
+    publisher_id: varchar(16);
+    tahun: int;
+    kategori: varchar(40) [not null];
+    nama_file: varchar(255) [not null];
+    file_dokumen_key: varchar(255) [not null];
+    ukuran_file: int [not null]
+  }
+
+- laporan_admin [x: 620, y: 192] {
+    tiket_id: varchar(16) [pk];
+    user_id: varchar(16) [not null];
+    kategori_modul: varchar(40) [not null];
+    judul_laporan: varchar(150) [not null];
+    deskripsi_kendala: varchar(2000) [not null];
+    lampiran_nama_file: varchar(255) [null];
+    lampiran_bukti_key: varchar(255) [null];
+    status_tiket: varchar(20) [not null];
+    tanggal_lapor: datetime [not null];
+    admin_id: varchar(16) [null];
+    tanggapan_admin: varchar(255) [null];
+    tanggal_tanggapan: datetime [null]
+  }
+
+Ref: pengguna.user_id - mahasiswa.user_id
+Ref: pengguna.user_id - dosen.user_id
+Ref: dosen.nip < mahasiswa.nip_wali
+Ref: mahasiswa.nrp < krs.nrp
+Ref: krs.krs_id < detail_krs.krs_id
+Ref: classroom.kelas_id < detail_krs.kelas_id
+Ref: mata_kuliah.kode_mk < classroom.kode_mk
+Ref: dosen.nip < classroom.nip
+Ref: classroom.kelas_id < bagian_kelas.kelas_id
+Ref: bagian_kelas.bagian_id < materi_kelas.bagian_id
+Ref: bagian_kelas.bagian_id < tugas_kelas.bagian_id
+Ref: tugas_kelas.tugas_id < pengumpulan_tugas.tugas_id
+Ref: mahasiswa.nrp < pengumpulan_tugas.nrp
+Ref: pengguna.user_id < laporan_admin.user_id
+Ref: pengguna.user_id < laporan_admin.admin_id
+Ref: pengumuman_classroom.kelas_id > classroom.kelas_id
+Ref: perpustakaan.publisher_id > pengguna.user_id
