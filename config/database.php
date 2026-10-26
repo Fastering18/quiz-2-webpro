@@ -98,8 +98,29 @@ return [
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
             'options' => extension_loaded('pdo_pgsql') ? array_filter([
-                PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', true),
-            ]) : [],
+                PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', false),
+                PDO::ATTR_EMULATE_PREPARES => env('DB_EMULATE_PREPARES', true),
+            ], fn ($v) => $v !== null) : [],
+        ],
+
+        // Dedicated connection for Neon / PgBouncer connection pooling
+        'pgsql_pooler' => [
+            'driver' => 'pgsql',
+            'url' => env('DB_POOLER_URL', env('DB_URL')),
+            'host' => env('DB_POOLER_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('DB_POOLER_PORT', env('DB_PORT', '5432')),
+            'database' => env('DB_DATABASE', 'laravel'),
+            'username' => env('DB_USERNAME', 'root'),
+            'password' => env('DB_PASSWORD', ''),
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'options' => extension_loaded('pdo_pgsql') ? [
+                PDO::ATTR_PERSISTENT => false,
+                PDO::ATTR_EMULATE_PREPARES => true,
+            ] : [],
         ],
 
         'sqlsrv' => [
