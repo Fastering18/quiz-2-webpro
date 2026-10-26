@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atur Ulang Kata Sandi - myITS Classroom</title>
+    @include('partials.seo-head', [
+        'title' => 'Atur Ulang Kata Sandi',
+        'description' => 'Atur ulang kata sandi akun myITS Classroom Institut Teknologi Sepuluh Nopember.',
+        'robots' => 'index, follow'
+    ])
     <link rel="stylesheet" href="/global.css">
     <link rel="stylesheet" href="/style.css">
 </head>

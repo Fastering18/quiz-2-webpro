@@ -1527,15 +1527,34 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // Initial fetch of classrooms
-    try {
-        const data = await window.apiFetch("/api/classrooms");
-        classroomsData = data?.classrooms || [];
+    // Initial load: use SSR pre-hydrated state if available, else fetch
+    if (window.__INITIAL_DATA__ && window.__INITIAL_DATA__.classrooms) {
+        classroomsData = window.__INITIAL_DATA__.classrooms || [];
         renderCourseListInitial();
-        if (classroomsData.length > 0) {
+        if (window.__INITIAL_DATA__.firstClass) {
+            currentDetail = window.__INITIAL_DATA__.firstClass;
+            activeClassroomId = currentDetail.kelas_id;
+            activeSectionId = currentDetail.bagian_kelas?.[0]?.bagian_id || null;
+            closeAnnouncementView();
+            updateCourseSidebarActiveState();
+            updateLessonList();
+            updateHeader();
+            renderMaterials();
+            if (activeTab === "tasks") renderTasks();
+            if (activeTab === "users") renderUsers();
+        } else if (classroomsData.length > 0) {
             selectCourse(classroomsData[0].kelas_id);
         }
-    } catch (err) {
-        console.error("Gagal mengambil daftar kelas:", err);
+    } else {
+        try {
+            const data = await window.apiFetch("/api/classrooms");
+            classroomsData = data?.classrooms || data?.data || [];
+            renderCourseListInitial();
+            if (classroomsData.length > 0) {
+                selectCourse(classroomsData[0].kelas_id);
+            }
+        } catch (err) {
+            console.error("Gagal mengambil daftar kelas:", err);
+        }
     }
 });

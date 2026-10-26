@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Masuk - myITS Classroom</title>
+    @include('partials.seo-head', [
+        'title' => 'Masuk',
+        'description' => 'Masuk ke portal myITS Classroom Institut Teknologi Sepuluh Nopember untuk mengakses perkuliahan daring, materi, tugas mahasiswa, perpustakaan digital, dan KRS.',
+        'robots' => 'index, follow'
+    ])
     <link rel="stylesheet" href="/global.css">
     <link rel="stylesheet" href="/style.css">
 </head>

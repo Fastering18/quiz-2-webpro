@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="user-role" content="{{ auth()->user()?->role ?? '' }}">
-    <title>Lapor Admin - myITS Classroom</title>
+    @include('partials.seo-head', [
+        'title' => 'Lapor Admin',
+        'description' => 'Layanan bantuan teknis dan pelaporan kendala perkuliahan myITS Classroom Institut Teknologi Sepuluh Nopember.',
+    ])
     <link rel="stylesheet" href="/global.css">
     <link rel="stylesheet" href="/dashboard.css">
     <script src="/components.js"></script>
@@ -85,7 +84,7 @@
                         <div class="report-card">
                             <div class="history-header">
                                 <h3 class="section-title">Riwayat Laporan</h3>
-                                <a href="#" class="link-blue" id="btnLihatSemua">Buka Semua</a>
+                                <!--a href="#" class="link-blue" id="btnLihatSemua">Buka Semua</a-->
                             </div>
 
                             <div class="history-list" id="reportHistoryList">

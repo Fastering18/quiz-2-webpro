@@ -5,12 +5,19 @@ const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/
 
 class MyTopbar extends HTMLElement {
     connectedCallback() {
-        // Read cached user to render instantly without flickering
-        let cached = null;
-        try {
-            const raw = localStorage.getItem('user');
-            if (raw) cached = JSON.parse(raw);
-        } catch (e) {}
+        // Read pre-hydrated user from SSR or local storage to render instantly without flickering
+        let cached = window.__AUTH_USER__ || null;
+        if (!cached) {
+            try {
+                const raw = localStorage.getItem('user');
+                if (raw) cached = JSON.parse(raw);
+            } catch (e) {}
+        } else {
+            try {
+                cached._cachedAt = Date.now();
+                localStorage.setItem('user', JSON.stringify(cached));
+            } catch (e) {}
+        }
 
         const userName = cached?.nama_lengkap || cached?.username || 'Memuat...';
         const userCode = cached?.mahasiswa?.nrp || cached?.dosen?.nip || cached?.username || '-';
@@ -90,27 +97,29 @@ class MyTopbar extends HTMLElement {
             }
         };
 
-        // Only fetch /api/me if not cached or cache is older than 5 minutes
-        const cachedAge = cached?._cachedAt ? (Date.now() - cached._cachedAt) : Infinity;
-        if (!cached || cachedAge > 300000) {
-            const csrf = document.querySelector('meta[name="csrf-token"]')?.content || "";
-            fetch('/api/me', {
-                credentials: 'same-origin',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.user) {
-                    data.user._cachedAt = Date.now();
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    applyUser(data.user);
-                    window.dispatchEvent(new CustomEvent('auth:user-updated', { detail: data.user }));
-                }
-            })
-            .catch(() => {});
+        // If user was already provided by SSR window.__AUTH_USER__, skip /api/me fetch entirely
+        if (!window.__AUTH_USER__) {
+            const cachedAge = cached?._cachedAt ? (Date.now() - cached._cachedAt) : Infinity;
+            if (!cached || cachedAge > 300000) {
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.content || "";
+                fetch('/api/me', {
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.user) {
+                        data.user._cachedAt = Date.now();
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        applyUser(data.user);
+                        window.dispatchEvent(new CustomEvent('auth:user-updated', { detail: data.user }));
+                    }
+                })
+                .catch(() => {});
+            }
         }
 
         // Hamburger & Dropdown menu toggle
@@ -205,14 +214,17 @@ class MySidebar extends HTMLElement {
         if (metaRole === 'admin') isAdmin = true;
         if (metaRole === 'dosen') isDosen = true;
 
-        try {
-            const raw = localStorage.getItem('user');
-            if (raw) {
-                const u = JSON.parse(raw);
-                if (u.role === 'dosen') isDosen = true;
-                if (u.role === 'admin') isAdmin = true;
-            }
-        } catch (e) {}
+        let u = window.__AUTH_USER__ || null;
+        if (!u) {
+            try {
+                const raw = localStorage.getItem('user');
+                if (raw) u = JSON.parse(raw);
+            } catch (e) {}
+        }
+        if (u) {
+            if (u.role === 'dosen') isDosen = true;
+            if (u.role === 'admin') isAdmin = true;
+        }
 
         const menuItems = [
             { id: 'portal',    name: 'Portal',                     url: '/portal',      icon: 'Portal.svg' },

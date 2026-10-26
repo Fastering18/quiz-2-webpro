@@ -90,4 +90,29 @@ class WebRoutesTest extends TestCase
 
         $this->assertGuest();
     }
+
+    public function test_sitemap_returns_valid_xml(): void
+    {
+        $response = $this->get('/sitemap.xml');
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/xml');
+        $response->assertSee('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">', false);
+        $response->assertSee(url('/'));
+    }
+
+    public function test_pwa_and_seo_assets_are_accessible(): void
+    {
+        $welcome = $this->get('/');
+        $welcome->assertStatus(200);
+        $welcome->assertSee('<link rel="manifest" href="/manifest.webmanifest">', false);
+        $welcome->assertSee('<meta name="theme-color" content="#00337F">', false);
+        $welcome->assertSee('<meta property="og:site_name" content="myITS Classroom">', false);
+
+        $this->assertFileExists(public_path('manifest.webmanifest'));
+        $this->assertFileExists(public_path('sw.js'));
+        $this->assertFileExists(public_path('offline.html'));
+        $this->assertFileExists(public_path('icons/icon-192.png'));
+        $this->assertFileExists(public_path('icons/icon-512.png'));
+    }
 }
