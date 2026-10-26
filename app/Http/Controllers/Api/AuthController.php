@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -75,7 +76,9 @@ class AuthController extends Controller
             $request->session()->regenerateToken();
         }
 
-        if ($request->user() && $request->user()->currentAccessToken()) {
+        if ($token = $request->bearerToken()) {
+            PersonalAccessToken::findToken($token)?->delete();
+        } elseif ($request->user() && $request->user()->currentAccessToken()) {
             $request->user()->currentAccessToken()->delete();
         }
 

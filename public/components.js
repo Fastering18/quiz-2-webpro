@@ -146,6 +146,9 @@ class MyTopbar extends HTMLElement {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                const authToken = localStorage.getItem('auth_token') || '';
+
                 try {
                     await fetch('/api/logout', {
                         method: 'POST',
@@ -153,11 +156,26 @@ class MyTopbar extends HTMLElement {
                         headers: {
                             'Accept': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest',
-                            ...(csrf ? { 'X-CSRF-TOKEN': csrf } : {})
+                            ...(authToken ? { 'Authorization': 'Bearer ' + authToken } : {}),
+                            ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
                         }
                     });
                 } catch (err) {}
+
+                try {
+                    await fetch('/logout', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
+                        }
+                    });
+                } catch (err) {}
+
                 localStorage.clear();
+                sessionStorage.clear();
                 window.location.href = '/';
             });
         }

@@ -28,15 +28,15 @@ use Illuminate\Support\Facades\Route;
 
 // Public Authentication Route
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login')->name('api.login');
+Route::post('/logout', [AuthController::class, 'logout'])->name('api.logout');
 
 Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])->name('api.password.forgot');
 Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('api.password.reset');
 
 // Protected Routes (Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
-    // Current User & Logout
+    // Current User
     Route::get('/me', [AuthController::class, 'me'])->name('api.me');
-    Route::post('/logout', [AuthController::class, 'logout'])->name('api.logout');
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('api.dashboard');

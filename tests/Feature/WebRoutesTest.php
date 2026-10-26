@@ -63,4 +63,31 @@ class WebRoutesTest extends TestCase
             $response->assertViewIs($viewName);
         }
     }
+
+    public function test_authenticated_user_can_logout_via_web(): void
+    {
+        $user = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
+
+        $response = $this->actingAs($user)->post('/logout');
+        $response->assertRedirect(route('login'));
+        $this->assertGuest();
+    }
+
+    public function test_user_can_logout_via_api(): void
+    {
+        $loginRes = $this->postJson('/api/login', [
+            'username' => 'admin',
+            'password' => 'admin',
+        ])->assertStatus(200);
+
+        $token = $loginRes->json('access_token');
+        $this->assertAuthenticated();
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->postJson('/api/logout')
+            ->assertStatus(200)
+            ->assertJsonPath('message', 'Logout berhasil. Sesi telah diakhiri.');
+
+        $this->assertGuest();
+    }
 }

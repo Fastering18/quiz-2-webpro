@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\FileController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +18,21 @@ Route::get('/', function () {
 })->name('login');
 
 Route::get('/reset-password', fn () => view('reset-password'))->name('password.reset');
+
+Route::any('/logout', function (Request $request) {
+    Auth::guard('web')->logout();
+
+    if ($request->hasSession()) {
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+    }
+
+    if ($request->expectsJson()) {
+        return response()->json(['message' => 'Logout berhasil. Sesi telah diakhiri.']);
+    }
+
+    return redirect()->route('login');
+})->name('logout');
 
 Route::middleware('auth')->group(function () {
     Route::get('/portal', function () {
