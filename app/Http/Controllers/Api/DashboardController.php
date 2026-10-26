@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Api\Admin\StatsController;
 use App\Http\Controllers\Controller;
 use App\Models\Classroom;
 use App\Models\Krs;
@@ -109,6 +110,7 @@ class DashboardController extends Controller
             'user' => $user,
             'role' => 'admin',
             'message' => 'Dashboard Administrator',
+            'stats' => StatsController::summary(),
         ]);
     }
 }

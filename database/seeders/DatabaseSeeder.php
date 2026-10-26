@@ -34,6 +34,13 @@ class DatabaseSeeder extends Seeder
 
     private function seed(): void
     {
+        // Idempotent: when the demo data already exists only make sure the admin account is there.
+        if (Dosen::where('nip', '1011011')->exists()) {
+            $this->ensureAdmin();
+
+            return;
+        }
+
         // 1. Dosen User & Record
         $userDosen = User::create([
             'user_id' => 'id_dosen',
@@ -77,17 +84,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // 3. Admin User
-        $userAdmin = User::create([
-            'user_id' => 'admin',
-            'username' => 'admin',
-            'nama_lengkap' => 'Administrator Akademik',
-            'email' => 'admin@its.ac.id',
-            'password_hash' => Hash::make('admin'),
-            'role' => 'admin',
-            'foto_profil_key' => null,
-            'nomor_telepon' => '089988776655',
-            'alamat_rumah' => 'Gedung Rektorat ITS Surabaya',
-        ]);
+        $userAdmin = $this->ensureAdmin();
 
         // 4. Mata Kuliah
         $mkList = [
@@ -314,6 +311,20 @@ class DatabaseSeeder extends Seeder
             'admin_id' => $userAdmin->user_id,
             'tanggapan_admin' => 'Laporan sedang ditinjau dengan koordinator prodi.',
             'tanggal_tanggapan' => now()->subDay(),
+        ]);
+    }
+
+    private function ensureAdmin(): User
+    {
+        return User::firstOrCreate(['user_id' => 'admin'], [
+            'username' => 'admin',
+            'nama_lengkap' => 'Administrator Akademik',
+            'email' => 'admin@its.ac.id',
+            'password_hash' => Hash::make('admin'),
+            'role' => 'admin',
+            'foto_profil_key' => null,
+            'nomor_telepon' => '089988776655',
+            'alamat_rumah' => 'Gedung Rektorat ITS Surabaya',
         ]);
     }
 }

@@ -1,5 +1,13 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\DosenController as AdminDosenController;
+use App\Http\Controllers\Api\Admin\KelasController as AdminKelasController;
+use App\Http\Controllers\Api\Admin\KrsController as AdminKrsController;
+use App\Http\Controllers\Api\Admin\MahasiswaController as AdminMahasiswaController;
+use App\Http\Controllers\Api\Admin\MataKuliahController as AdminMataKuliahController;
+use App\Http\Controllers\Api\Admin\PerpustakaanController as AdminPerpustakaanController;
+use App\Http\Controllers\Api\Admin\StatsController as AdminStatsController;
+use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClassroomController;
 use App\Http\Controllers\Api\DashboardController;
@@ -63,4 +71,48 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('api.profile.show');
     Route::put('/profile', [ProfileController::class, 'update'])->name('api.profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('api.profile.password');
+
+    // Admin module (role: admin)
+    Route::middleware('admin')->prefix('admin')->name('api.admin.')->group(function () {
+        Route::get('/stats', [AdminStatsController::class, 'index'])->name('stats');
+
+        Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
+        Route::post('/users', [AdminUserController::class, 'store'])->name('users.store');
+        Route::get('/users/{id}', [AdminUserController::class, 'show'])->name('users.show');
+        Route::put('/users/{id}', [AdminUserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{id}', [AdminUserController::class, 'destroy'])->name('users.destroy');
+        Route::patch('/users/{id}/password', [AdminUserController::class, 'resetPassword'])->name('users.password');
+
+        Route::get('/mahasiswa', [AdminMahasiswaController::class, 'index'])->name('mahasiswa.index');
+        Route::get('/mahasiswa/{nrp}', [AdminMahasiswaController::class, 'show'])->name('mahasiswa.show');
+        Route::put('/mahasiswa/{nrp}', [AdminMahasiswaController::class, 'update'])->name('mahasiswa.update');
+
+        Route::get('/dosen', [AdminDosenController::class, 'index'])->name('dosen.index');
+        Route::get('/dosen/{nip}/mahasiswa', [AdminDosenController::class, 'mahasiswa'])->name('dosen.mahasiswa');
+
+        Route::get('/mata-kuliah', [AdminMataKuliahController::class, 'index'])->name('mata-kuliah.index');
+        Route::post('/mata-kuliah', [AdminMataKuliahController::class, 'store'])->name('mata-kuliah.store');
+        Route::get('/mata-kuliah/{kodeMk}', [AdminMataKuliahController::class, 'show'])->name('mata-kuliah.show');
+        Route::put('/mata-kuliah/{kodeMk}', [AdminMataKuliahController::class, 'update'])->name('mata-kuliah.update');
+        Route::delete('/mata-kuliah/{kodeMk}', [AdminMataKuliahController::class, 'destroy'])->name('mata-kuliah.destroy');
+
+        Route::get('/kelas', [AdminKelasController::class, 'index'])->name('kelas.index');
+        Route::post('/kelas', [AdminKelasController::class, 'store'])->name('kelas.store');
+        Route::get('/kelas/{kelasId}', [AdminKelasController::class, 'show'])->name('kelas.show');
+        Route::put('/kelas/{kelasId}', [AdminKelasController::class, 'update'])->name('kelas.update');
+        Route::delete('/kelas/{kelasId}', [AdminKelasController::class, 'destroy'])->name('kelas.destroy');
+
+        Route::get('/krs', [AdminKrsController::class, 'index'])->name('krs.index');
+        Route::post('/krs', [AdminKrsController::class, 'store'])->name('krs.store');
+        Route::get('/krs/{krsId}', [AdminKrsController::class, 'show'])->name('krs.show');
+        Route::patch('/krs/{krsId}/status', [AdminKrsController::class, 'updateStatus'])->name('krs.status');
+        Route::delete('/krs/{krsId}', [AdminKrsController::class, 'destroy'])->name('krs.destroy');
+        Route::post('/krs/{krsId}/kelas', [AdminKrsController::class, 'addKelas'])->name('krs.kelas.add');
+        Route::patch('/krs/{krsId}/kelas/{kelasId}', [AdminKrsController::class, 'updateNilai'])->name('krs.kelas.nilai');
+        Route::delete('/krs/{krsId}/kelas/{kelasId}', [AdminKrsController::class, 'removeKelas'])->name('krs.kelas.remove');
+
+        Route::get('/library', [AdminPerpustakaanController::class, 'index'])->name('library.index');
+        Route::put('/library/{bukuId}', [AdminPerpustakaanController::class, 'update'])->name('library.update');
+        Route::delete('/library/{bukuId}', [AdminPerpustakaanController::class, 'destroy'])->name('library.destroy');
+    });
 });

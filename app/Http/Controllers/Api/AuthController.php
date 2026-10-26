@@ -33,7 +33,7 @@ class AuthController extends Controller
             ]);
         }
 
-        Auth::login($user);
+        Auth::guard('web')->login($user);
         if ($request->hasSession()) {
             $request->session()->regenerate();
         }
@@ -44,6 +44,7 @@ class AuthController extends Controller
             'message' => 'Login berhasil.',
             'access_token' => $token,
             'token_type' => 'Bearer',
+            'role' => $user->role,
             'user' => $user,
         ]);
     }
@@ -57,6 +58,7 @@ class AuthController extends Controller
         $user?->loadMissing(['mahasiswa.dosenWali.user', 'dosen']);
 
         return response()->json([
+            'role' => $user?->role,
             'user' => $user,
         ]);
     }
