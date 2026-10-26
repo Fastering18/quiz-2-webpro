@@ -33,3 +33,19 @@
 
 
 ---
+
+## Docker / Deploy
+
+**Local (Docker + Postgres):**
+
+```bash
+export APP_KEY=$(php artisan key:generate --show)
+docker compose up --build   # API at http://localhost:8080/api, health at /up
+```
+
+The container runs `migrate --force` on start and seeds the database only when the `pengguna` table is empty.
+Example login: `POST /api/login` with `{"username": "198501012010121001", "password": "password"}`.
+
+**Render (free Docker web service + Neon Postgres):** the `render.yaml` blueprint defines the service.
+Set these env vars in the Render dashboard: `APP_KEY`, `APP_URL`, and `DB_URL`
+(Neon connection string, e.g. `postgresql://user:pass@host/db?sslmode=require`). The health check path is `/up`.

@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: quiz2
+      POSTGRES_USER: quiz2
+      POSTGRES_PASSWORD: quiz2
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quiz2 -d quiz2"]
+      interval: 5s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:10000"
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      # Generate one with: php artisan key:generate --show
+      APP_KEY: ${APP_KEY:?set APP_KEY}
+      APP_URL: http://localhost:8080
+      LOG_CHANNEL: stderr
+      DB_CONNECTION: pgsql
+      DB_URL: postgresql://quiz2:quiz2@db:5432/quiz2?sslmode=disable
+      SESSION_DRIVER: array
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+
+volumes:
+  pgdata:
