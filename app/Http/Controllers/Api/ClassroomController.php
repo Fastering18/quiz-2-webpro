@@ -381,4 +381,3 @@ class ClassroomController extends Controller
         return response()->json(['message' => 'Tugas berhasil diperbarui.', 'task' => $task->fresh()]);
     }
 }
-

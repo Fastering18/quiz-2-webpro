@@ -10,7 +10,7 @@
 
 ## 1. Project Overview
 
-...
+Web classroom ITS reverse engineered. 
 
 ---
 
@@ -46,7 +46,7 @@ docker compose up --build   # API at http://localhost:8080/api, health at /up
 ```
 
 The container runs `migrate --force` on start and seeds the database only when the `pengguna` table is empty.
-Example login: `POST /api/login` with `{"username": "198501012010121001", "password": "password"}`.
+Example login: `POST /api/login` with `{"username": "198501012010121001", "password": "admin"}`.
 
 **Render (free Docker web service + Neon Postgres):** the `render.yaml` blueprint defines the service.
 Set these env vars in the Render dashboard: `APP_KEY`, `APP_URL`, and `DB_URL`
@@ -221,19 +221,19 @@ Cross-cutting:
 
 `php artisan migrate:fresh --seed` (or `RESET_DB=1` on the container) produces a complete, idempotent demo dataset
 (the seeder runs in one transaction and does nothing when the data already exists, except making sure `admin` exists).
-**All demo accounts use the password `password`.** Mahasiswa and dosen log in with their NRP / NIP.
+**All demo accounts use the password `admin`.** Mahasiswa and dosen log in with their NRP / NIP.
 
 | Role | Username | Name | Notes |
 | --- | --- | --- | --- |
 | admin | `admin` | Administrator Akademik | admin API, answers reports |
 | dosen | `198501012010121001` | Dr. Sarwosri, S.Kom., M.T. | wali of 5025251131, 5025251169, 5025251132; teaches Sistem Operasi (B), PBO (A), Basis Data (C) |
-| dosen | `197803152005011002` | Prof. Dr. Ir. Bambang Nugroho, M.Sc. | wali of 5025251140, 5025251155, 5025251172; teaches Jaringan Komputer (A), Kecerdasan Buatan (A), Dasar Pemrograman (A, 2025/Genap) |
+| dosen | `197803152005011002` | Prof. Dr. Ir. Bambang Nugroho, M.Sc. | wali of 5025251128, 5025251129, 5025251172; teaches Jaringan Komputer (A), Kecerdasan Buatan (A), Dasar Pemrograman (A, 2025/Genap) |
 | dosen | `198208202008012003` | Dr. Rina Kartika, S.T., M.Sc. | wali of 5025251180, 5025251195; teaches Struktur Data (A), Pemrograman Web (B) |
 | mahasiswa | `5025251131` | Muhammad Azka Asyrafany | KRS 2026/Ganjil **Disetujui** (SO, PBO, BD, JK = 13 SKS) + graded 2025/Genap; graded, late and on-time submissions; 3 reports (Diproses/Terkirim/Selesai) |
 | mahasiswa | `5025251169` | Kevin Lontong | KRS **Menunggu**; overdue task without submission; open+answered report |
 | mahasiswa | `5025251132` | Siti Nurhaliza | KRS Disetujui; graded + ungraded submissions |
-| mahasiswa | `5025251140` | Budi Santoso | KRS Disetujui; late graded submission |
-| mahasiswa | `5025251155` | Dewi Lestari | KRS **Menunggu**; open report |
+| mahasiswa | `5025251128` | Budiman Setiono | KRS Disetujui; late graded submission |
+| mahasiswa | `5025251129` | Muhammad Brahmana Priambudi | KRS **Menunggu**; open report |
 | mahasiswa | `5025251172` | Rizky Pratama | KRS **Ditolak** (7 classes); answered/rejected report |
 | mahasiswa | `5025251180` | Anisa Putri | KRS Disetujui |
 | mahasiswa | `5025251195` | Fajar Nugroho | KRS **Menunggu** |

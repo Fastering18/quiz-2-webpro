@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\FileStorage;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -100,6 +101,6 @@ class User extends Authenticatable
 
     public function getFotoUrlAttribute(): ?string
     {
-        return app(\App\Services\FileStorage::class)->temporaryUrl($this->foto_profil_key);
+        return app(FileStorage::class)->temporaryUrl($this->foto_profil_key);
     }
 }

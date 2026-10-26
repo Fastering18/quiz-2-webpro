@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Admin\StatsController;
 use App\Http\Controllers\Controller;
 use App\Models\Classroom;
 use App\Models\Krs;
+use App\Models\PengumpulanTugas;
 use App\Models\PengumumanClassroom;
 use App\Models\TugasKelas;
 use Illuminate\Http\JsonResponse;
@@ -109,7 +110,7 @@ class DashboardController extends Controller
                 'user' => $user,
                 'dosen' => $dosen,
                 'total_kelas_ajar' => $classes->count(),
-                'perlu_dinilai' => \App\Models\PengumpulanTugas::whereNull('nilai_tugas')
+                'perlu_dinilai' => PengumpulanTugas::whereNull('nilai_tugas')
                     ->whereHas('tugas.bagianKelas', fn ($q) => $q->whereIn('kelas_id', $classes->pluck('kelas_id')))
                     ->count(),
                 'krs_menunggu' => Krs::where('status_acc', 'Menunggu')

@@ -26,7 +26,8 @@ class SeederTest extends TestCase
 
         $this->assertDatabaseHas('classroom', ['kelas_id' => 'CLS_SO_B']);
 
-        $mahasiswa = Mahasiswa::with('user', 'dosenWali', 'krs.detailKrs.classroom.mataKuliah')->orderBy('nrp')->first();
+        $mahasiswa = Mahasiswa::where('nrp', '5025251131')->with('user', 'dosenWali', 'krs.detailKrs.classroom.mataKuliah')->first();
+        $this->assertNotNull($mahasiswa);
         $this->assertSame('5025251131', $mahasiswa->nrp);
         $this->assertNotNull($mahasiswa->dosenWali);
         $this->assertCount(2, $mahasiswa->krs);
@@ -75,7 +76,7 @@ class SeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         foreach ([['admin', 'admin'], ['198501012010121001', 'dosen'], ['5025251131', 'mahasiswa'], ['5025251169', 'mahasiswa'], ['197803152005011002', 'dosen']] as [$u, $role]) {
-            $this->postJson('/api/login', ['username' => $u, 'password' => 'password'])
+            $this->postJson('/api/login', ['username' => $u, 'password' => 'admin'])
                 ->assertOk()->assertJsonPath('role', $role);
         }
     }

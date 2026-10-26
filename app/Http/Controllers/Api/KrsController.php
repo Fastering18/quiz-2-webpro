@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Classroom;
 use App\Models\DetailKrs;
 use App\Models\Krs;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Response;
 use App\Models\User;
 use App\Services\SimplePdf;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class KrsController extends Controller
 {

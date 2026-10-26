@@ -1,9 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\FileController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/files/local', [\App\Http\Controllers\Api\FileController::class, 'local'])
+Route::get('/files/local', [FileController::class, 'local'])
     ->middleware('signed')
     ->name('files.local');
 

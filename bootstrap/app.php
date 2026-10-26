@@ -1,11 +1,12 @@
 <?php
 
-use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Configuration\Exceptions;
-use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\EnsureAdmin;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
@@ -29,7 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
         $middleware->throttleApi('api');
         $middleware->alias([
-            'admin' => \App\Http\Middleware\EnsureAdmin::class,
+            'admin' => EnsureAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -87,7 +88,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json(['message' => 'Terjadi kesalahan pada server. Silakan coba lagi nanti.'], $e->getStatusCode());
             }
         });
-        $exceptions->render(function (\Throwable $e, Request $request) use ($isJson) {
+        $exceptions->render(function (Throwable $e, Request $request) use ($isJson) {
             if ($isJson($request) && ! config('app.debug') && ! $e instanceof HttpExceptionInterface) {
                 return response()->json(['message' => 'Terjadi kesalahan pada server. Silakan coba lagi nanti.'], 500);
             }

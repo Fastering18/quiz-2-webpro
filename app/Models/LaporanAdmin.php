@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\FileStorage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -60,6 +61,6 @@ class LaporanAdmin extends Model
 
     public function getFileUrlAttribute(): ?string
     {
-        return app(\App\Services\FileStorage::class)->temporaryUrl($this->lampiran_bukti_key, $this->lampiran_nama_file);
+        return app(FileStorage::class)->temporaryUrl($this->lampiran_bukti_key, $this->lampiran_nama_file);
     }
 }

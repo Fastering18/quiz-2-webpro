@@ -20,12 +20,11 @@ use App\Services\FileStorage;
 use App\Services\SimplePdf;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Demo dataset that exercises every feature. All demo accounts use the password "password".
+ * Demo dataset that exercises every feature. All demo accounts use the password "admin".
  *
  *   admin                  Administrator
  *   198501012010121001     Dr. Sarwosri (dosen, teaches SO/PBO/BD, wali of 3 students)
@@ -186,8 +185,8 @@ class DatabaseSeeder extends Seeder
             '5025251131' => ['Disetujui', ['CLS_SO_B', 'CLS_PBO_A', 'CLS_BD_C', 'CLS_JK_A']],
             '5025251169' => ['Menunggu', ['CLS_SO_B', 'CLS_PBO_A', 'CLS_BD_C']],
             '5025251132' => ['Disetujui', ['CLS_SO_B', 'CLS_PBO_A', 'CLS_SDA_A']],
-            '5025251140' => ['Disetujui', ['CLS_SO_B', 'CLS_JK_A', 'CLS_PW_B']],
-            '5025251155' => ['Menunggu', ['CLS_BD_C', 'CLS_JK_A', 'CLS_SDA_A']],
+            '5025251128' => ['Disetujui', ['CLS_SO_B', 'CLS_JK_A', 'CLS_PW_B']],
+            '5025251129' => ['Menunggu', ['CLS_BD_C', 'CLS_JK_A', 'CLS_SDA_A']],
             '5025251172' => ['Ditolak', ['CLS_SO_B', 'CLS_PBO_A', 'CLS_BD_C', 'CLS_JK_A', 'CLS_SDA_A', 'CLS_PW_B', 'CLS_KB_A']],
             '5025251180' => ['Disetujui', ['CLS_PBO_A', 'CLS_SDA_A', 'CLS_PW_B']],
             '5025251195' => ['Menunggu', ['CLS_SO_B', 'CLS_PW_B']],
@@ -299,7 +298,7 @@ class DatabaseSeeder extends Seeder
         foreach ([
             ['CLS_SO_B#1/1', '5025251131', 95, 'Laporan dan source code terlampir dalam file zip.', 50, 'tugas1_5025251131.zip'],
             ['CLS_SO_B#1/1', '5025251132', 88, null, 20, 'tugas1_5025251132.zip'],
-            ['CLS_SO_B#1/1', '5025251140', 72, 'Mohon maaf terlambat.', -30, 'tugas1_5025251140.zip'], // late + graded
+            ['CLS_SO_B#1/1', '5025251128', 72, 'Mohon maaf terlambat.', -30, 'tugas1_5025251128.zip'], // late + graded
             ['CLS_SO_B#2/1', '5025251131', null, 'Terlambat karena kendala jaringan kampus.', -26, 'rr_5025251131.zip'], // late, not graded
             ['CLS_SO_B#2/1', '5025251132', null, null, 30, 'rr_5025251132.zip'], // on time, not graded
             ['CLS_PBO_A#1/1', '5025251132', 90, 'Sudah memakai enkapsulasi penuh.', 40, 'tugas1_pbo_5025251132.zip'],
@@ -353,7 +352,7 @@ class DatabaseSeeder extends Seeder
             ['TKT_20261018_A003', 'mhs_5025251131', 'Perpustakaan', 'Materi kuliah gagal diunduh', 'Berkas materi pertemuan 1 tidak dapat diunduh dari perpustakaan.', 'Selesai', 8, 'Sudah diperbaiki. Silakan coba unduh kembali.'],
             ['TKT_20261020_B001', 'mhs_5025251169', 'KRS & Jadwal', 'Permohonan penggantian jadwal bentrok', 'Jadwal kelas Basis Data bentrok dengan praktikum Sistem Operasi pada hari Rabu.', 'Diproses', 6, 'Laporan sedang ditinjau bersama koordinator prodi.'],
             ['TKT_20261019_C001', 'mhs_5025251172', 'KRS', 'KRS saya ditolak', 'Mohon penjelasan mengapa KRS saya berstatus Ditolak.', 'Ditolak', 7, 'Jumlah SKS melebihi batas semester ini. Silakan hubungi dosen wali Anda.'],
-            ['TKT_20261023_D001', 'mhs_5025251155', 'Profil dan Akun', 'Tidak bisa mengganti foto profil', 'Unggah foto profil selalu gagal dengan pesan ukuran terlalu besar.', 'Terkirim', 3, null],
+            ['TKT_20261023_D001', 'mhs_5025251129', 'Profil dan Akun', 'Tidak bisa mengganti foto profil', 'Unggah foto profil selalu gagal dengan pesan ukuran terlalu besar.', 'Terkirim', 3, null],
             ['TKT_20261024_E001', $dosen->user_id, 'Classroom', 'Nilai tugas tidak tersimpan', 'Setelah menekan simpan nilai, nilai kembali kosong.', 'Terkirim', 2, null],
         ] as [$id, $uid, $kat, $judul, $desk, $status, $ago, $answer]) {
             LaporanAdmin::create([

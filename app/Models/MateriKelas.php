@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\FileStorage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -45,6 +46,6 @@ class MateriKelas extends Model
 
     public function getFileUrlAttribute(): ?string
     {
-        return app(\App\Services\FileStorage::class)->temporaryUrl($this->file_materi_key, $this->nama_file);
+        return app(FileStorage::class)->temporaryUrl($this->file_materi_key, $this->nama_file);
     }
 }

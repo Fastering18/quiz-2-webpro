@@ -6,6 +6,7 @@ use App\Models\Classroom;
 use App\Models\Dosen;
 use App\Models\Krs;
 use App\Models\LaporanAdmin;
+use App\Models\MateriKelas;
 use App\Models\PengumpulanTugas;
 use App\Models\PengumumanClassroom;
 use App\Models\TugasKelas;
@@ -14,6 +15,7 @@ use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -32,6 +34,10 @@ class ApiGapsTest extends TestCase
 
     private function userOf(string $role): User
     {
+        if ($role === 'mahasiswa') {
+            return User::where('user_id', 'mhs_5025251131')->first();
+        }
+
         return User::where('role', $role)->orderBy('user_id')->first();
     }
 
@@ -65,7 +71,7 @@ class ApiGapsTest extends TestCase
 
     public function test_unexpected_exception_returns_generic_json_500(): void
     {
-        \Illuminate\Support\Facades\Route::get('/api/_boom', fn () => throw new \RuntimeException('secret detail'));
+        Route::get('/api/_boom', fn () => throw new \RuntimeException('secret detail'));
         config(['app.debug' => false]);
 
         $this->getJson('/api/_boom')->assertStatus(500)
@@ -170,10 +176,10 @@ class ApiGapsTest extends TestCase
         $matId = $this->postJson("/api/sections/{$sectionId}/materials", [
             'judul_materi' => 'M1', 'file' => UploadedFile::fake()->create('a.pdf', 10, 'application/pdf'),
         ])->assertCreated()->json('material.materi_id');
-        $old = \App\Models\MateriKelas::find($matId)->file_materi_key;
+        $old = MateriKelas::find($matId)->file_materi_key;
         $this->putJson("/api/materials/{$matId}", ['judul_materi' => 'M1b'])->assertOk()->assertJsonPath('material.judul_materi', 'M1b');
         $this->post("/api/materials/{$matId}", ['file' => UploadedFile::fake()->create('b.pdf', 10, 'application/pdf')], ['Accept' => 'application/json'])->assertOk();
-        $new = \App\Models\MateriKelas::find($matId);
+        $new = MateriKelas::find($matId);
         $this->assertNotSame($old, $new->file_materi_key);
         $this->assertSame('b.pdf', $new->nama_file);
         Storage::disk('s3')->assertMissing($old);

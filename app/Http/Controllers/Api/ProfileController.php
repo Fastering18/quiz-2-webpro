@@ -104,4 +104,3 @@ class ProfileController extends Controller
         return response()->json(['message' => 'Foto profil berhasil dihapus.', 'profile' => $user->fresh()]);
     }
 }
-

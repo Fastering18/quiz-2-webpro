@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Classroom;
 use App\Models\LaporanAdmin;
 use App\Models\MateriKelas;
-use App\Models\Perpustakaan;
 use App\Models\PengumpulanTugas;
+use App\Models\Perpustakaan;
 use App\Models\User;
 use App\Services\FileStorage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -25,7 +26,7 @@ class FileController extends Controller
 {
     public function __construct(private FileStorage $files) {}
 
-    public function show(Request $request, string $kind, string $id): JsonResponse|\Symfony\Component\HttpFoundation\Response
+    public function show(Request $request, string $kind, string $id): JsonResponse|Response
     {
         $user = $request->user();
 

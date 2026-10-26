@@ -52,7 +52,7 @@ class AcademicApiTest extends TestCase
 
     public function test_student_can_fetch_dashboard(): void
     {
-        $student = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
+        $student = User::where('user_id', 'mhs_5025251131')->first();
         Sanctum::actingAs($student);
 
         $response = $this->getJson('/api/dashboard');
@@ -142,7 +142,7 @@ class AcademicApiTest extends TestCase
 
     public function test_student_can_view_and_submit_krs(): void
     {
-        $student = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
+        $student = User::where('user_id', 'mhs_5025251131')->first();
         Sanctum::actingAs($student);
 
         $indexResponse = $this->getJson('/api/krs');

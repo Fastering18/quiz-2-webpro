@@ -54,7 +54,7 @@ class AdminApiTest extends TestCase
 
     public function test_login_and_me_include_role(): void
     {
-        $this->postJson('/api/login', ['username' => 'admin', 'password' => 'password'])
+        $this->postJson('/api/login', ['username' => 'admin', 'password' => 'admin'])
             ->assertStatus(200)
             ->assertJsonPath('role', 'admin');
 
