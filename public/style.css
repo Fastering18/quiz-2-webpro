@@ -1,0 +1,277 @@
+/* style.css */
+
+.login-wrapper {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    
+    background-image: url('./image/Background_Main.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--white);
+    padding: 28px 32px;
+    border-radius: 16px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15); /* Shadow diperhalus agar lebih modern */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo {
+    width: 100%;
+    max-width: 256px;
+    height: auto;
+    padding: 10px;
+}
+
+.header-text {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.header-text h1 {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.header-text p {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-gray);
+}
+
+.login-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-group label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-label);
+}
+
+.input-group input {
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--text-dark);
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.input-group input:hover {
+    border-color: #9ca3af;
+}
+
+.input-group input:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(1, 45, 102, 0.15);
+}
+
+.forgot-password {
+    text-align: right;
+}
+
+.forgot-password a {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--primary-blue);
+}
+
+/* === EFEK HOVER PADA LINK === */
+.forgot-password a:hover {
+    color: var(--primary-blue-hover);
+    text-decoration: underline;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 12px 16px;
+    background-color: var(--primary-blue);
+    color: var(--white);
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+/* === EFEK HOVER & ACTIVE PADA TOMBOL === */
+.btn-login:hover {
+    background-color: var(--primary-blue-hover);
+}
+
+.btn-login:active {
+    transform: scale(0.98);
+}
+
+.footer {
+    background-color: var(--bg-color);
+    padding: 11px 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.footer-content {
+    max-width: 1440px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 87px;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-dark);
+}
+
+.lang-switch {
+    color: var(--text-dark);
+}
+
+.lang-switch:hover {
+    color: var(--primary-blue);
+    text-decoration: underline;
+}
+
+/* Responsivitas untuk layar HP */
+@media (max-width: 600px) {
+    .footer-content {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+/* === TAMBAHAN STYLE UNTUK VARIASI CARD (STATE) === */
+
+.view-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.d-none {
+    display: none !important;
+}
+
+/* Alert Boxes (Error & Info) */
+.alert {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+}
+
+.alert-danger {
+    background: #FEF3F2;
+    border: 1px solid #FECDCA;
+}
+.alert-danger h4, .alert-danger p { color: #B42318; margin: 0;}
+.alert-danger h4 { font-size: 13px; font-weight: 600; }
+.alert-danger p { font-size: 13px; font-weight: 400; line-height: 18px; }
+
+.alert-info {
+    background: #EAF0F8;
+    border: 1px solid #C7D6EA;
+}
+.alert-info h4 { color: #012D66; font-size: 13px; font-weight: 600; margin: 0;}
+.alert-info p { color: #374151; font-size: 13px; font-weight: 400; margin: 0; line-height: 18px;}
+
+/* Input Wrapper & Icon Eye */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    width: 100%;
+}
+.input-wrapper input {
+    width: 100%;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.toggle-password:hover svg stroke {
+    stroke: var(--primary-blue);
+}
+
+/* Error States on Input */
+.input-group input.input-error {
+    border-color: #B42318;
+}
+.input-group input.input-error:focus {
+    box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.15);
+}
+.error-text {
+    color: #B42318;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+
+.btn-primary {
+    width: 100%;
+    padding: 12px 16px;
+    background-color: var(--primary-blue);
+    color: var(--white);
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    text-align: center;
+    display: inline-block;
+}
+.btn-primary:hover { background-color: #011d42; }
+.btn-primary:active { transform: scale(0.98); }
+
+.back-link {
+    text-align: center;
+    margin-top: -4px;
+}
+.btn-back {
+    color: var(--primary-blue);
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+}
+.btn-back:hover { text-decoration: underline; }
+.info-text {
+    text-align: center;
+    color: var(--text-gray);
+    font-size: 13px;
+    line-height: 20px;
+}

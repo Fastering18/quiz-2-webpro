@@ -62,10 +62,10 @@ class ClassroomController extends Controller
         $user = $request->user();
         $studentNrp = $user->role === 'mahasiswa' ? $user->mahasiswa?->nrp : null;
 
-        $classroom = Classroom::with([
+        $query = Classroom::with([
             'mataKuliah',
             'dosen.user',
-            'pengumuman',
+            'pengumuman' => fn ($q) => $q->orderByDesc('tanggal_unggah'),
             'bagianKelas' => function ($q) use ($studentNrp) {
                 $q->orderBy('urutan')
                     ->with([
@@ -76,11 +76,20 @@ class ClassroomController extends Controller
                                 $tq->with(['pengumpulan' => function ($sq) use ($studentNrp) {
                                     $sq->where('nrp', $studentNrp);
                                 }]);
+                            } else {
+                                $tq->with(['pengumpulan.mahasiswa.user']);
                             }
                         },
                     ]);
             },
-        ])->findOrFail($kelasId);
+            'detailKrs.krs.mahasiswa.user',
+        ]);
+
+        if ($user->role === 'dosen') {
+            $query->where('nip', $user->dosen?->nip);
+        }
+
+        $classroom = $query->findOrFail($kelasId);
 
         return response()->json([
             'classroom' => $classroom,
@@ -143,7 +152,7 @@ class ClassroomController extends Controller
     /**
      * Upload/attach material to a section.
      */
-    public function storeMaterial(Request $request, int $bagianId): JsonResponse
+    public function storeMaterial(Request $request, string|int $bagianId): JsonResponse
     {
         $section = BagianKelas::findOrFail($bagianId);
 
@@ -184,7 +193,7 @@ class ClassroomController extends Controller
     /**
      * Create a task/assignment inside a section.
      */
-    public function storeTask(Request $request, int $bagianId): JsonResponse
+    public function storeTask(Request $request, string|int $bagianId): JsonResponse
     {
         $section = BagianKelas::findOrFail($bagianId);
 

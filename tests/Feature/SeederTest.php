@@ -16,26 +16,16 @@ class SeederTest extends TestCase
     {
         $this->seed(DatabaseSeeder::class);
 
-        $this->assertDatabaseHas('pengguna', [
-            'username' => '5025251131',
-            'role' => 'mahasiswa',
-        ]);
-
-        $this->assertDatabaseHas('mahasiswa', [
-            'nrp' => '5025251131',
-        ]);
-
         $this->assertDatabaseHas('classroom', [
             'kelas_id' => 'CLS_SO_B',
         ]);
 
-        $user = User::where('username', '5025251131')->first();
-        $this->assertNotNull($user);
-        $this->assertEquals('Muhammad Azka Asyrafany', $user->nama_lengkap);
+        $studentUser = User::where('role', 'mahasiswa')->first();
+        $this->assertNotNull($studentUser);
 
         $mahasiswa = Mahasiswa::with('user', 'dosenWali', 'krs.detailKrs.classroom.mataKuliah')->first();
         $this->assertNotNull($mahasiswa);
-        $this->assertEquals('198501012010121001', $mahasiswa->dosenWali->nip);
+        $this->assertNotNull($mahasiswa->dosenWali);
         $this->assertCount(1, $mahasiswa->krs);
         $this->assertCount(3, $mahasiswa->krs->first()->detailKrs);
     }

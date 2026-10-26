@@ -14,7 +14,7 @@ class TugasController extends Controller
     /**
      * Display the task detail and student's submission status.
      */
-    public function show(Request $request, int $tugasId): JsonResponse
+    public function show(Request $request, string|int $tugasId): JsonResponse
     {
         $user = $request->user();
         $task = TugasKelas::with(['bagianKelas.classroom.mataKuliah', 'bagianKelas.classroom.dosen.user'])
@@ -44,7 +44,7 @@ class TugasController extends Controller
     /**
      * Submit or re-submit an assignment for the task.
      */
-    public function submit(Request $request, int $tugasId): JsonResponse
+    public function submit(Request $request, string|int $tugasId): JsonResponse
     {
         $user = $request->user();
 
@@ -106,7 +106,7 @@ class TugasController extends Controller
     /**
      * Grade student submission (Dosen / Admin).
      */
-    public function grade(Request $request, int $submitId): JsonResponse
+    public function grade(Request $request, string|int $submitId): JsonResponse
     {
         $user = $request->user();
 

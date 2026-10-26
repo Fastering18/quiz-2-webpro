@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -32,6 +33,11 @@ class AuthController extends Controller
             ]);
         }
 
+        Auth::login($user);
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -47,8 +53,8 @@ class AuthController extends Controller
      */
     public function me(Request $request): JsonResponse
     {
-        $user = $request->user();
-        $user->loadMissing(['mahasiswa.dosenWali.user', 'dosen']);
+        $user = $request->user() ?? Auth::user();
+        $user?->loadMissing(['mahasiswa.dosenWali.user', 'dosen']);
 
         return response()->json([
             'user' => $user,
@@ -56,11 +62,20 @@ class AuthController extends Controller
     }
 
     /**
-     * Revoke current access token.
+     * Revoke current access token and invalidate session.
      */
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        Auth::guard('web')->logout();
+
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        if ($request->user() && $request->user()->currentAccessToken()) {
+            $request->user()->currentAccessToken()->delete();
+        }
 
         return response()->json([
             'message' => 'Logout berhasil. Sesi telah diakhiri.',

@@ -140,10 +140,11 @@ class OperationsApiTest extends TestCase
     public function test_user_can_change_password(): void
     {
         $student = User::where('role', 'mahasiswa')->first();
+        $student->update(['password_hash' => Hash::make('oldpassword123')]);
         Sanctum::actingAs($student);
 
         $response = $this->putJson('/api/profile/password', [
-            'current_password' => 'password',
+            'current_password' => 'oldpassword123',
             'password' => 'newpassword123',
             'password_confirmation' => 'newpassword123',
         ]);
@@ -153,5 +154,72 @@ class OperationsApiTest extends TestCase
 
         $student->refresh();
         $this->assertTrue(Hash::check('newpassword123', $student->password_hash));
+    }
+
+    public function test_admin_reports_are_sorted_by_unanswered_first_and_latest(): void
+    {
+        $admin = User::where('role', 'admin')->first();
+        Sanctum::actingAs($admin);
+
+        // Seed 1 answered older, 1 answered newer, 1 unanswered older, 1 unanswered newer
+        $student = User::where('role', 'mahasiswa')->first();
+
+        $answeredOld = LaporanAdmin::create([
+            'tiket_id' => 'TKT_ANS_OLD',
+            'user_id' => $student->user_id,
+            'kategori_modul' => 'Classroom',
+            'judul_laporan' => 'Answered Old',
+            'deskripsi_kendala' => 'Desc',
+            'status_tiket' => 'Selesai',
+            'tanggal_lapor' => now()->subDays(5),
+            'tanggapan_admin' => 'Sudah beres',
+            'admin_id' => $admin->user_id,
+        ]);
+
+        $answeredNew = LaporanAdmin::create([
+            'tiket_id' => 'TKT_ANS_NEW',
+            'user_id' => $student->user_id,
+            'kategori_modul' => 'Classroom',
+            'judul_laporan' => 'Answered New',
+            'deskripsi_kendala' => 'Desc',
+            'status_tiket' => 'Selesai',
+            'tanggal_lapor' => now()->subDays(1),
+            'tanggapan_admin' => 'Sudah beres juga',
+            'admin_id' => $admin->user_id,
+        ]);
+
+        $unansweredOld = LaporanAdmin::create([
+            'tiket_id' => 'TKT_UNANS_OLD',
+            'user_id' => $student->user_id,
+            'kategori_modul' => 'Classroom',
+            'judul_laporan' => 'Unanswered Old',
+            'deskripsi_kendala' => 'Desc',
+            'status_tiket' => 'Terkirim',
+            'tanggal_lapor' => now()->subDays(3),
+            'tanggapan_admin' => null,
+        ]);
+
+        $unansweredNew = LaporanAdmin::create([
+            'tiket_id' => 'TKT_UNANS_NEW',
+            'user_id' => $student->user_id,
+            'kategori_modul' => 'Classroom',
+            'judul_laporan' => 'Unanswered New',
+            'deskripsi_kendala' => 'Desc',
+            'status_tiket' => 'Terkirim',
+            'tanggal_lapor' => now(),
+            'tanggapan_admin' => null,
+        ]);
+
+        $response = $this->getJson('/api/reports');
+        $response->assertStatus(200);
+
+        $reports = $response->json('data');
+        // Unanswered New should be first, followed by Unanswered Old, then Answered New, then Answered Old
+        $titles = collect($reports)->pluck('judul_laporan');
+
+        $this->assertEquals('Unanswered New', $titles->first());
+        $this->assertTrue(
+            $titles->search('Unanswered Old') < $titles->search('Answered New')
+        );
     }
 }

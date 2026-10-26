@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('detail_krs', function (Blueprint $table) {
             $table->id('detail_id');
-            $table->string('krs_id', 64);
-            $table->string('kelas_id', 64);
+            $table->string('krs_id', 32);
+            $table->string('kelas_id', 12);
             $table->integer('nilai_akhir')->nullable();
 
             $table->foreign('krs_id')->references('krs_id')->on('krs')->cascadeOnDelete();

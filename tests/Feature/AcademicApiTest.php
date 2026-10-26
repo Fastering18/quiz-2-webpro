@@ -8,6 +8,7 @@ use App\Models\TugasKelas;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -23,9 +24,12 @@ class AcademicApiTest extends TestCase
 
     public function test_user_can_login_and_access_me(): void
     {
+        $user = User::first();
+        $user->update(['password_hash' => Hash::make('testpass123')]);
+
         $response = $this->postJson('/api/login', [
-            'username' => '5025251131',
-            'password' => 'password',
+            'username' => $user->username,
+            'password' => 'testpass123',
         ]);
 
         $response->assertStatus(200)
@@ -42,13 +46,13 @@ class AcademicApiTest extends TestCase
             ->getJson('/api/me');
 
         $meResponse->assertStatus(200)
-            ->assertJsonPath('user.username', '5025251131')
-            ->assertJsonPath('user.role', 'mahasiswa');
+            ->assertJsonPath('user.username', $user->username)
+            ->assertJsonPath('user.role', $user->role);
     }
 
     public function test_student_can_fetch_dashboard(): void
     {
-        $student = User::where('username', '5025251131')->first();
+        $student = User::where('role', 'mahasiswa')->first();
         Sanctum::actingAs($student);
 
         $response = $this->getJson('/api/dashboard');
@@ -61,13 +65,13 @@ class AcademicApiTest extends TestCase
                 'upcoming_tasks',
                 'announcements',
             ])
-            ->assertJsonPath('user.nrp', '5025251131')
+            ->assertJsonPath('user.nrp', $student->mahasiswa->nrp)
             ->assertJsonPath('summary.total_sks', 10);
     }
 
     public function test_student_can_view_enrolled_classrooms_and_details(): void
     {
-        $student = User::where('username', '5025251131')->first();
+        $student = User::where('role', 'mahasiswa')->first();
         Sanctum::actingAs($student);
 
         $listResponse = $this->getJson('/api/classrooms');
@@ -90,7 +94,7 @@ class AcademicApiTest extends TestCase
 
     public function test_student_can_view_and_submit_task(): void
     {
-        $student = User::where('username', '5025251131')->first();
+        $student = User::where('role', 'mahasiswa')->first();
         Sanctum::actingAs($student);
 
         $task = TugasKelas::first();
@@ -138,7 +142,7 @@ class AcademicApiTest extends TestCase
 
     public function test_student_can_view_and_submit_krs(): void
     {
-        $student = User::where('username', '5025251131')->first();
+        $student = User::where('role', 'mahasiswa')->first();
         Sanctum::actingAs($student);
 
         $indexResponse = $this->getJson('/api/krs');
@@ -179,6 +183,60 @@ class AcademicApiTest extends TestCase
         $this->assertDatabaseHas('krs', [
             'krs_id' => $krs->krs_id,
             'status_acc' => 'Disetujui',
+        ]);
+    }
+
+    public function test_dosen_can_create_section_material_and_task(): void
+    {
+        $dosen = User::where('role', 'dosen')->first();
+        Sanctum::actingAs($dosen);
+
+        // 1. Create Section
+        $secResponse = $this->postJson('/api/classrooms/CLS_SO_B/sections', [
+            'judul_bagian' => 'Pertemuan 5: CPU Scheduling Algorithm',
+            'deskripsi' => 'Membahas algoritma FCFS, SJF, Round Robin, dan Multilevel Queue.',
+        ]);
+
+        $secResponse->assertStatus(201)
+            ->assertJsonPath('section.judul_bagian', 'Pertemuan 5: CPU Scheduling Algorithm');
+
+        $bagianId = $secResponse->json('section.bagian_id');
+
+        $this->assertDatabaseHas('bagian_kelas', [
+            'bagian_id' => $bagianId,
+            'kelas_id' => 'CLS_SO_B',
+        ]);
+
+        // 2. Upload Material
+        $matResponse = $this->postJson('/api/sections/'.$bagianId.'/materials', [
+            'judul_materi' => 'Slide Bab 5 - CPU Scheduling',
+            'nama_file' => 'cpu_scheduling.pdf',
+            'file_materi_key' => 'materials/test_cpu_sched.pdf',
+            'ukuran_file' => 3145728,
+        ]);
+
+        $matResponse->assertStatus(201)
+            ->assertJsonPath('material.judul_materi', 'Slide Bab 5 - CPU Scheduling');
+
+        $this->assertDatabaseHas('materi_kelas', [
+            'bagian_id' => $bagianId,
+            'judul_materi' => 'Slide Bab 5 - CPU Scheduling',
+        ]);
+
+        // 3. Create Task
+        $taskResponse = $this->postJson('/api/sections/'.$bagianId.'/tasks', [
+            'judul_tugas' => 'Simulasi Algoritma Round Robin di C',
+            'deskripsi_tugas' => 'Implementasikan simulasi round robin dengan quantum 4 ms.',
+            'format_file' => 'c,zip',
+            'tenggat_waktu' => now()->addDays(7)->toDateString(),
+        ]);
+
+        $taskResponse->assertStatus(201)
+            ->assertJsonPath('task.judul_tugas', 'Simulasi Algoritma Round Robin di C');
+
+        $this->assertDatabaseHas('tugas_kelas', [
+            'bagian_id' => $bagianId,
+            'judul_tugas' => 'Simulasi Algoritma Round Robin di C',
         ]);
     }
 }

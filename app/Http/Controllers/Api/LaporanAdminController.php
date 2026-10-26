@@ -28,7 +28,14 @@ class LaporanAdminController extends Controller
             $query->where('status_tiket', $status);
         }
 
-        $reports = $query->orderByDesc('tanggal_lapor')->paginate(15);
+        if ($user->role === 'admin') {
+            $query->orderByRaw('CASE WHEN tanggapan_admin IS NULL THEN 0 ELSE 1 END ASC')
+                ->orderByDesc('tanggal_lapor');
+        } else {
+            $query->orderByDesc('tanggal_lapor');
+        }
+
+        $reports = $query->paginate(15);
 
         return response()->json($reports);
     }

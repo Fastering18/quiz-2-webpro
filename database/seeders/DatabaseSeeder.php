@@ -36,19 +36,19 @@ class DatabaseSeeder extends Seeder
     {
         // 1. Dosen User & Record
         $userDosen = User::create([
-            'user_id' => 'USR_DSN_01',
-            'username' => '198501012010121001',
-            'nama_lengkap' => 'Dr. Sarwosri, S.Kom., M.T.',
-            'email' => 'sarwosri@its.ac.id',
-            'password_hash' => Hash::make('password'),
+            'user_id' => 'id_dosen',
+            'username' => 'dosen1',
+            'nama_lengkap' => 'Bapak ibu dosen',
+            'email' => 'dosen@its.ac.id',
+            'password_hash' => Hash::make('dosen'),
             'role' => 'dosen',
             'foto_profil_key' => null,
-            'nomor_telepon' => '081122334455',
+            'nomor_telepon' => '0666666',
             'alamat_rumah' => 'Surabaya, Jawa Timur',
         ]);
 
         $dosen = Dosen::create([
-            'nip' => '198501012010121001',
+            'nip' => '1011011',
             'user_id' => $userDosen->user_id,
             'departemen' => 'Teknik Informatika',
             'status' => 'Aktif',
@@ -56,11 +56,11 @@ class DatabaseSeeder extends Seeder
 
         // 2. Mahasiswa User & Record (From Figma Design: Muhammad Azka Asyrafany, 5025251131)
         $userMhs = User::create([
-            'user_id' => 'USR_MHS_01',
-            'username' => '5025251131',
-            'nama_lengkap' => 'Muhammad Azka Asyrafany',
-            'email' => 'azka@student.its.ac.id',
-            'password_hash' => Hash::make('password'),
+            'user_id' => 'id_mahasiswa',
+            'username' => 'kevinlontong',
+            'nama_lengkap' => 'Kevin Lontong',
+            'email' => 'lontong@student.its.ac.id',
+            'password_hash' => Hash::make('kevin'),
             'role' => 'mahasiswa',
             'foto_profil_key' => null,
             'nomor_telepon' => '081234567890',
@@ -68,7 +68,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $mahasiswa = Mahasiswa::create([
-            'nrp' => '5025251131',
+            'nrp' => '5025251169',
             'user_id' => $userMhs->user_id,
             'nip_wali' => $dosen->nip,
             'departemen' => 'Teknik Informatika',
@@ -78,11 +78,11 @@ class DatabaseSeeder extends Seeder
 
         // 3. Admin User
         $userAdmin = User::create([
-            'user_id' => 'USR_ADM_01',
+            'user_id' => 'admin',
             'username' => 'admin',
             'nama_lengkap' => 'Administrator Akademik',
             'email' => 'admin@its.ac.id',
-            'password_hash' => Hash::make('password'),
+            'password_hash' => Hash::make('admin'),
             'role' => 'admin',
             'foto_profil_key' => null,
             'nomor_telepon' => '089988776655',
