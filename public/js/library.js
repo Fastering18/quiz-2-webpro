@@ -1,10 +1,105 @@
-// public/js/library.js - Perpustakaan search, pagination, and download logic
-document.addEventListener("DOMContentLoaded", function () {
+// public/js/library.js - Perpustakaan search, pagination, download, upload & delete logic
+document.addEventListener("DOMContentLoaded", async function () {
     const libraryTableBody = document.getElementById("libraryTableBody");
     const searchInput = document.getElementById("searchInput");
     const libraryPagination = document.getElementById("libraryPagination");
 
     if (!libraryTableBody) return;
+
+    let currentUser = null;
+    try {
+        const raw = localStorage.getItem("user");
+        if (raw) currentUser = JSON.parse(raw);
+    } catch (e) {}
+
+    if (!currentUser) {
+        try {
+            const meRes = await window.apiFetch("/api/me");
+            currentUser = meRes?.user;
+            if (currentUser) localStorage.setItem("user", JSON.stringify(currentUser));
+        } catch (e) {}
+    }
+
+    const canManageBooks = currentUser?.role === "dosen" || currentUser?.role === "admin";
+
+    // Modal Helpers
+    function openModal(id) {
+        const m = document.getElementById(id);
+        if (m) m.classList.add("is-open");
+    }
+    function closeModal(id) {
+        const m = document.getElementById(id);
+        if (m) m.classList.remove("is-open");
+    }
+
+    document.addEventListener("click", function (e) {
+        const closeBtn = e.target.closest("[data-close-modal]");
+        if (closeBtn) closeModal(closeBtn.dataset.closeModal);
+        if (e.target.classList.contains("modal-overlay")) closeModal(e.target.id);
+    });
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+            document.querySelectorAll(".modal-overlay.is-open").forEach(m => closeModal(m.id));
+        }
+    });
+
+    // If teacher/admin, show upload button
+    const btnOpenUpload = document.getElementById("btnOpenModalUploadBuku");
+    if (btnOpenUpload && canManageBooks) {
+        btnOpenUpload.classList.remove("d-none");
+        btnOpenUpload.addEventListener("click", () => openModal("modalUploadBuku"));
+    }
+
+    // Form Upload Submit
+    const formUpload = document.getElementById("formUploadBuku");
+    if (formUpload) {
+        formUpload.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const judul = document.getElementById("inputBukuJudul")?.value.trim();
+            const penulis = document.getElementById("inputBukuPenulis")?.value.trim();
+            const tahun = document.getElementById("inputBukuTahun")?.value;
+            const kategori = document.getElementById("selectBukuKategori")?.value;
+            const fileInput = document.getElementById("inputBukuFile");
+            const fb = document.getElementById("feedbackUploadBuku");
+            const btn = document.getElementById("btnSubmitUploadBuku");
+
+            if (!judul || !penulis || !fileInput?.files?.[0]) {
+                if (fb) {
+                    fb.textContent = "Lengkapi judul, penulis, dan pilih berkas buku.";
+                    fb.className = "classroom-feedback is-visible is-error";
+                }
+                return;
+            }
+
+            if (btn) { btn.disabled = true; btn.textContent = "Mengunggah..."; }
+
+            try {
+                const formData = new FormData();
+                formData.append("judul_buku", judul);
+                formData.append("penulis", penulis);
+                if (tahun) formData.append("tahun", tahun);
+                formData.append("kategori", kategori || "Referensi");
+                formData.append("file", fileInput.files[0]);
+
+                await window.apiFetch("/api/library", {
+                    method: "POST",
+                    body: formData
+                });
+
+                formUpload.reset();
+                closeModal("modalUploadBuku");
+                alert("Buku berhasil ditambahkan ke perpustakaan!");
+                loadBooks(1, searchQuery);
+            } catch (err) {
+                if (fb) {
+                    fb.textContent = err.message || "Gagal mengunggah buku.";
+                    fb.className = "classroom-feedback is-visible is-error";
+                }
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = "Unggah Buku"; }
+            }
+        });
+    }
 
     let currentPage = 1;
     let searchQuery = "";
@@ -30,6 +125,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
             libraryTableBody.innerHTML = list.map(function (b, idx) {
                 const downloadUrl = b.file_dokumen_key ? `/storage/${b.file_dokumen_key}` : "#";
+
+                const deleteBtnHtml = canManageBooks ? `
+                    <button type="button" class="btn-action-small btn-action-danger btn-delete-buku" data-id="${b.buku_id}" data-title="${window.escapeHtml(b.judul_buku)}">
+                        Hapus
+                    </button>
+                ` : "";
+
                 return `
                 <div class="lib-table-row">
                     <div class="col-no">${fromIdx + idx + 1}</div>
@@ -42,13 +144,33 @@ document.addEventListener("DOMContentLoaded", function () {
                             </span>
                         </div>
                     </div>
-                    <div class="col-action">
-                        <a href="${downloadUrl}" download="${window.escapeHtml(b.nama_file || 'buku.pdf')}" target="_blank" class="btn-primary-small" style="text-decoration:none;">
+                    <div class="col-action" style="display:flex; justify-content:flex-end; gap:8px; align-items:center;">
+                        <a href="${downloadUrl}" download="${window.escapeHtml(b.nama_file || 'buku.pdf')}" target="_blank" class="btn-primary-small" style="text-decoration:none; padding:6px 12px; font-size:12px;">
                             ${downloadIcon} Unduh
                         </a>
+                        ${deleteBtnHtml}
                     </div>
                 </div>`;
             }).join("");
+
+            // Wire delete book buttons
+            if (canManageBooks) {
+                libraryTableBody.querySelectorAll(".btn-delete-buku").forEach(btn => {
+                    btn.addEventListener("click", async function () {
+                        const id = this.dataset.id;
+                        const title = this.dataset.title;
+                        if (!confirm(`Hapus buku "${title}" dari perpustakaan?`)) return;
+
+                        try {
+                            await window.apiFetch(`/api/library/${encodeURIComponent(id)}`, { method: "DELETE" });
+                            alert("Buku berhasil dihapus dari perpustakaan.");
+                            loadBooks(currentPage, searchQuery);
+                        } catch (err) {
+                            alert(err.message || "Gagal menghapus buku.");
+                        }
+                    });
+                });
+            }
 
             // Render pagination
             if (libraryPagination && booksData.last_page > 1) {

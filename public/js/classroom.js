@@ -84,9 +84,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     isDosen = currentUser?.role === "dosen";
+    let isAdmin = currentUser?.role === "admin";
+    let canManage = isDosen || isAdmin;
 
     // Setup role UI adjustments
-    if (isDosen) {
+    if (canManage) {
         if (tabTasks) tabTasks.textContent = "Tugas & Kiriman";
         if (tabUsers) tabUsers.classList.remove("d-none");
         if (btnOpenModalSection) {
@@ -274,6 +276,15 @@ document.addEventListener("DOMContentLoaded", async function () {
             const iconClass = (!isPpt && !isPdf) ? "source-file-icon is-text" : "source-file-icon";
             const fileType = isPpt ? "PPT" : (isPdf ? "PDF" : "DOC");
 
+            const manageMaterialHtml = canManage ? `
+                <button type="button" class="btn-action-small btn-action-secondary btn-edit-material" data-id="${m.materi_id}" data-title="${window.escapeHtml(m.judul_materi)}">
+                    Edit
+                </button>
+                <button type="button" class="btn-action-small btn-action-danger btn-delete-material" data-id="${m.materi_id}" data-title="${window.escapeHtml(m.judul_materi)}">
+                    Hapus
+                </button>
+            ` : "";
+
             return `
             <div class="source-row">
                 <span class="${iconClass}" aria-hidden="true">${icon}</span>
@@ -282,14 +293,28 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <span class="source-description">${window.escapeHtml(m.nama_file)} • ${window.formatFileSize(m.ukuran_file)}</span>
                 </span>
                 <span class="file-type-badge">${fileType}</span>
-                ${m.file_materi_key ? `<a href="/storage/${m.file_materi_key}" download="${window.escapeHtml(m.nama_file)}" class="btn-primary-small" style="text-decoration:none; margin-left:auto;">Unduh</a>` : ""}
+                <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
+                    ${m.file_materi_key ? `<a href="/storage/${m.file_materi_key}" download="${window.escapeHtml(m.nama_file)}" class="btn-primary-small" style="text-decoration:none; padding:6px 12px; font-size:12px;">Unduh</a>` : ""}
+                    ${manageMaterialHtml}
+                </div>
             </div>`;
         }).join("");
 
-        const dosenTambahMateriBtn = isDosen ? `
+        const dosenTambahMateriBtn = canManage ? `
             <button type="button" class="btn-primary-small" id="btnOpenModalMateri" style="font-size:12px; padding:7px 14px;">
                 + Unggah Materi Baru
             </button>
+        ` : "";
+
+        const manageSectionHtml = canManage ? `
+            <div style="display:flex; gap:8px; margin-top:16px;">
+                <button type="button" class="btn-action-small btn-action-secondary btn-edit-section" data-id="${sec.bagian_id}" data-title="${window.escapeHtml(sec.judul_bagian)}" data-sub="${window.escapeHtml(sec.judul_ringkasan || '')}" data-konten="${window.escapeHtml(sec.konten_ringkasan || '')}">
+                    Edit Pertemuan
+                </button>
+                <button type="button" class="btn-action-small btn-action-danger btn-delete-section" data-id="${sec.bagian_id}" data-title="${window.escapeHtml(sec.judul_bagian)}">
+                    Hapus Pertemuan
+                </button>
+            </div>
         ` : "";
 
         materialsContent.innerHTML = `
@@ -310,10 +335,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <h2 class="classroom-summary-title">${window.escapeHtml(sec.judul_ringkasan || sec.judul_bagian)}</h2>
                     <p class="classroom-summary-subtitle">Ringkasan Konsep Utama</p>
                     <p class="classroom-summary-copy" style="white-space:pre-line;">${window.escapeHtml(sec.konten_ringkasan || "Belum ada ringkasan materi untuk bagian perkuliahan ini.")}</p>
+                    ${manageSectionHtml}
                 </section>
             </div>`;
 
-        if (isDosen) {
+        if (canManage) {
             const btnMateri = document.getElementById("btnOpenModalMateri");
             if (btnMateri) {
                 btnMateri.addEventListener("click", function () {
@@ -321,6 +347,76 @@ document.addEventListener("DOMContentLoaded", async function () {
                     openModal("modalMateri");
                 });
             }
+
+            // Wire edit & delete material
+            materialsContent.querySelectorAll(".btn-edit-material").forEach(btn => {
+                btn.addEventListener("click", function () {
+                    document.getElementById("editMateriId").value = this.dataset.id;
+                    document.getElementById("editMateriJudul").value = this.dataset.title;
+                    const fileInp = document.getElementById("editMateriFile");
+                    if (fileInp) fileInp.value = "";
+                    const fb = document.getElementById("feedbackEditMateri");
+                    if (fb) { fb.textContent = ""; fb.className = "classroom-feedback"; }
+                    openModal("modalEditMateri");
+                });
+            });
+
+            materialsContent.querySelectorAll(".btn-delete-material").forEach(btn => {
+                btn.addEventListener("click", async function () {
+                    const id = this.dataset.id;
+                    const title = this.dataset.title;
+                    if (!confirm(`Hapus materi "${title}"?`)) return;
+
+                    try {
+                        await window.apiFetch(`/api/materials/${encodeURIComponent(id)}`, { method: "DELETE" });
+                        alert("Materi berhasil dihapus.");
+                        const refreshed = await window.apiFetch(`/api/classrooms/${activeClassroomId}`);
+                        if (refreshed?.classroom) {
+                            currentDetail = refreshed.classroom;
+                            renderMaterials();
+                        }
+                    } catch (err) {
+                        alert(err.message || "Gagal menghapus materi.");
+                    }
+                });
+            });
+
+            // Wire edit & delete section
+            materialsContent.querySelectorAll(".btn-edit-section").forEach(btn => {
+                btn.addEventListener("click", function () {
+                    document.getElementById("editSectionId").value = this.dataset.id;
+                    document.getElementById("editSectionNama").value = this.dataset.title;
+                    document.getElementById("editSectionRingkasanJudul").value = this.dataset.sub;
+                    document.getElementById("editSectionRingkasanKonten").value = this.dataset.konten;
+                    const fb = document.getElementById("feedbackEditSection");
+                    if (fb) { fb.textContent = ""; fb.className = "classroom-feedback"; }
+                    openModal("modalEditSection");
+                });
+            });
+
+            materialsContent.querySelectorAll(".btn-delete-section").forEach(btn => {
+                btn.addEventListener("click", async function () {
+                    const id = this.dataset.id;
+                    const title = this.dataset.title;
+                    if (!confirm(`Hapus pertemuan "${title}" beserta semua materi dan tugas di dalamnya?`)) return;
+
+                    try {
+                        await window.apiFetch(`/api/sections/${encodeURIComponent(id)}`, { method: "DELETE" });
+                        alert("Pertemuan berhasil dihapus.");
+                        const refreshed = await window.apiFetch(`/api/classrooms/${activeClassroomId}`);
+                        if (refreshed?.classroom) {
+                            currentDetail = refreshed.classroom;
+                            const remaining = currentDetail.bagian_kelas || [];
+                            activeSectionId = remaining.length > 0 ? remaining[0].bagian_id : null;
+                            updateLessonList();
+                            updateHeader();
+                            renderMaterials();
+                        }
+                    } catch (err) {
+                        alert(err.message || "Gagal menghapus pertemuan.");
+                    }
+                });
+            });
         }
     }
 
@@ -548,6 +644,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                         <span class="task-status is-submitted">${submissions.length} Pengumpulan</span>
                     </div>
                     <p class="task-description" style="white-space:pre-line;">${window.escapeHtml(currentTask.deskripsi_tugas || "Instruksi tugas perkuliahan.")}</p>
+                    <div style="display:flex; gap:8px; margin-top:14px;">
+                        <button type="button" class="btn-action-small btn-action-secondary btn-edit-task" data-id="${currentTask.tugas_id}">
+                            Edit Tugas
+                        </button>
+                        <button type="button" class="btn-action-small btn-action-danger btn-delete-task" data-id="${currentTask.tugas_id}">
+                            Hapus Tugas
+                        </button>
+                    </div>
                 </section>
 
                 <section class="classroom-card">
@@ -568,6 +672,47 @@ document.addEventListener("DOMContentLoaded", async function () {
             btnTugas.addEventListener("click", function () {
                 populateSectionDropdowns();
                 openModal("modalTugas");
+            });
+        }
+
+        // Wire edit & delete task
+        const btnEditTask = tasksContent.querySelector(".btn-edit-task");
+        if (btnEditTask) {
+            btnEditTask.addEventListener("click", function () {
+                document.getElementById("editTugasId").value = currentTask.tugas_id;
+                document.getElementById("editTugasJudul").value = currentTask.judul_tugas;
+                document.getElementById("editTugasDeskripsi").value = currentTask.deskripsi_tugas || "";
+                document.getElementById("editTugasFormat").value = currentTask.format_file || ".c, .zip, .pdf";
+                if (currentTask.tenggat_waktu) {
+                    const d = new Date(currentTask.tenggat_waktu);
+                    // format to YYYY-MM-DDTHH:MM
+                    const pad = n => String(n).padStart(2, "0");
+                    const localIso = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+                    document.getElementById("editTugasDue").value = localIso;
+                }
+                const fb = document.getElementById("feedbackEditTugas");
+                if (fb) { fb.textContent = ""; fb.className = "classroom-feedback"; }
+                openModal("modalEditTugas");
+            });
+        }
+
+        const btnDeleteTask = tasksContent.querySelector(".btn-delete-task");
+        if (btnDeleteTask) {
+            btnDeleteTask.addEventListener("click", async function () {
+                if (!confirm(`Hapus tugas "${currentTask.judul_tugas}" beserta seluruh berkas kiriman mahasiswa?`)) return;
+
+                try {
+                    await window.apiFetch(`/api/tasks/${encodeURIComponent(currentTask.tugas_id)}`, { method: "DELETE" });
+                    alert("Tugas berhasil dihapus.");
+                    const refreshed = await window.apiFetch(`/api/classrooms/${activeClassroomId}`);
+                    if (refreshed?.classroom) {
+                        currentDetail = refreshed.classroom;
+                        activeTaskId = null;
+                        renderTasks();
+                    }
+                } catch (err) {
+                    alert(err.message || "Gagal menghapus tugas.");
+                }
             });
         }
 
@@ -836,7 +981,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!announcementsContent || !currentDetail) return;
         const annList = currentDetail.pengumuman || [];
 
-        const formDosenHtml = isDosen ? `
+        const formDosenHtml = canManage ? `
             <div class="classroom-card" style="margin-bottom:20px;">
                 <h3 style="font-size:16px; font-weight:700; margin-bottom:12px; color:#0F172A;">Buat Pengumuman Baru</h3>
                 <form id="formPostAnnouncement" novalidate>
@@ -853,6 +998,17 @@ document.addEventListener("DOMContentLoaded", async function () {
             ? '<div class="classroom-card"><div class="classroom-empty-state">Belum ada pengumuman untuk kelas ini.</div></div>'
             : annList.map(function (ann, index) {
                 const isOpen = index === 0;
+                const manageAnnHtml = canManage ? `
+                    <div style="display:flex; gap:8px; margin-top:10px; justify-content:flex-end;">
+                        <button type="button" class="btn-action-small btn-action-secondary btn-edit-announcement" data-id="${ann.pengumuman_id}">
+                            Edit
+                        </button>
+                        <button type="button" class="btn-action-small btn-action-danger btn-delete-announcement" data-id="${ann.pengumuman_id}">
+                            Hapus
+                        </button>
+                    </div>
+                ` : "";
+
                 return `
                 <div class="announcement-item ${isOpen ? "is-open" : ""}">
                     <button class="announcement-header" type="button" aria-expanded="${isOpen}">
@@ -867,6 +1023,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     </button>
                     <div class="announcement-body ${isOpen ? "" : "d-none"}">
                         <p class="announcement-text" style="white-space:pre-line;">${window.escapeHtml(ann.konten)}</p>
+                        ${manageAnnHtml}
                     </div>
                 </div>`;
             }).join("");
@@ -897,6 +1054,43 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             });
         });
+
+        // Wire edit & delete announcements
+        if (canManage) {
+            announcementsContent.querySelectorAll(".btn-edit-announcement").forEach(btn => {
+                btn.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    const id = this.dataset.id;
+                    const ann = (currentDetail?.pengumuman || []).find(a => String(a.pengumuman_id) === String(id));
+                    document.getElementById("editAnnouncementId").value = id;
+                    document.getElementById("editAnnouncementKonten").value = ann?.konten || "";
+                    const fb = document.getElementById("feedbackEditAnnouncement");
+                    if (fb) { fb.textContent = ""; fb.className = "classroom-feedback"; }
+                    openModal("modalEditAnnouncement");
+                });
+            });
+
+            announcementsContent.querySelectorAll(".btn-delete-announcement").forEach(btn => {
+                btn.addEventListener("click", async function (e) {
+                    e.stopPropagation();
+                    const id = this.dataset.id;
+                    if (!confirm("Hapus pengumuman ini?")) return;
+
+                    try {
+                        await window.apiFetch(`/api/announcements/${encodeURIComponent(id)}`, { method: "DELETE" });
+                        alert("Pengumuman berhasil dihapus.");
+                        const refreshed = await window.apiFetch(`/api/classrooms/${activeClassroomId}`);
+                        if (refreshed?.classroom) {
+                            currentDetail = refreshed.classroom;
+                            updateHeader();
+                            renderAnnouncements();
+                        }
+                    } catch (err) {
+                        alert(err.message || "Gagal menghapus pengumuman.");
+                    }
+                });
+            });
+        }
 
         // Wire dosen announcement post
         const formAnn = document.getElementById("formPostAnnouncement");
@@ -1087,6 +1281,182 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (fb) { fb.textContent = err.message || "Gagal membuat tugas."; fb.className = "classroom-feedback is-visible is-error"; }
             } finally {
                 if (btn) { btn.disabled = false; btn.textContent = "Terbitkan Tugas"; }
+            }
+        });
+    }
+
+    // 4. Edit Section
+    const formEditSection = document.getElementById("formEditSection");
+    if (formEditSection) {
+        formEditSection.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const secId = document.getElementById("editSectionId")?.value;
+            const judul = document.getElementById("editSectionNama")?.value.trim();
+            const sub = document.getElementById("editSectionRingkasanJudul")?.value.trim();
+            const konten = document.getElementById("editSectionRingkasanKonten")?.value.trim();
+            const fb = document.getElementById("feedbackEditSection");
+            const btn = document.getElementById("btnSubmitEditSection");
+
+            if (!judul) {
+                if (fb) { fb.textContent = "Judul pertemuan wajib diisi."; fb.className = "classroom-feedback is-visible is-error"; }
+                return;
+            }
+
+            if (btn) { btn.disabled = true; btn.textContent = "Menyimpan..."; }
+
+            try {
+                await window.apiFetch(`/api/sections/${secId}`, {
+                    method: "PUT",
+                    body: JSON.stringify({
+                        judul_bagian: judul,
+                        judul_ringkasan: sub || null,
+                        konten_ringkasan: konten || null
+                    })
+                });
+
+                closeModal("modalEditSection");
+                alert("Pertemuan berhasil diperbarui.");
+                const refreshed = await window.apiFetch(`/api/classrooms/${activeClassroomId}`);
+                if (refreshed?.classroom) {
+                    currentDetail = refreshed.classroom;
+                    updateLessonList();
+                    updateHeader();
+                    renderMaterials();
+                }
+            } catch (err) {
+                if (fb) { fb.textContent = err.message || "Gagal mengubah pertemuan."; fb.className = "classroom-feedback is-visible is-error"; }
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = "Simpan Perubahan"; }
+            }
+        });
+    }
+
+    // 5. Edit Materi
+    const formEditMateri = document.getElementById("formEditMateri");
+    if (formEditMateri) {
+        formEditMateri.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const materiId = document.getElementById("editMateriId")?.value;
+            const judul = document.getElementById("editMateriJudul")?.value.trim();
+            const fileInput = document.getElementById("editMateriFile");
+            const fb = document.getElementById("feedbackEditMateri");
+            const btn = document.getElementById("btnSubmitEditMateri");
+
+            if (!judul) {
+                if (fb) { fb.textContent = "Judul materi wajib diisi."; fb.className = "classroom-feedback is-visible is-error"; }
+                return;
+            }
+
+            if (btn) { btn.disabled = true; btn.textContent = "Menyimpan..."; }
+
+            try {
+                const formData = new FormData();
+                formData.append("judul_materi", judul);
+                if (fileInput?.files?.[0]) {
+                    formData.append("file", fileInput.files[0]);
+                }
+
+                await window.apiFetch(`/api/materials/${materiId}`, {
+                    method: "POST",
+                    body: formData
+                });
+
+                closeModal("modalEditMateri");
+                alert("Materi perkuliahan berhasil diperbarui.");
+                const refreshed = await window.apiFetch(`/api/classrooms/${activeClassroomId}`);
+                if (refreshed?.classroom) {
+                    currentDetail = refreshed.classroom;
+                    renderMaterials();
+                }
+            } catch (err) {
+                if (fb) { fb.textContent = err.message || "Gagal mengubah materi."; fb.className = "classroom-feedback is-visible is-error"; }
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = "Simpan Materi"; }
+            }
+        });
+    }
+
+    // 6. Edit Tugas
+    const formEditTugas = document.getElementById("formEditTugas");
+    if (formEditTugas) {
+        formEditTugas.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const tugasId = document.getElementById("editTugasId")?.value;
+            const judul = document.getElementById("editTugasJudul")?.value.trim();
+            const desc = document.getElementById("editTugasDeskripsi")?.value.trim();
+            const format = document.getElementById("editTugasFormat")?.value.trim();
+            const due = document.getElementById("editTugasDue")?.value;
+            const fb = document.getElementById("feedbackEditTugas");
+            const btn = document.getElementById("btnSubmitEditTugas");
+
+            if (!judul || !due) {
+                if (fb) { fb.textContent = "Judul dan batas pengumpulan wajib diisi."; fb.className = "classroom-feedback is-visible is-error"; }
+                return;
+            }
+
+            if (btn) { btn.disabled = true; btn.textContent = "Menyimpan..."; }
+
+            try {
+                await window.apiFetch(`/api/tasks/${tugasId}`, {
+                    method: "PUT",
+                    body: JSON.stringify({
+                        judul_tugas: judul,
+                        deskripsi_tugas: desc || null,
+                        format_file: format || ".c, .zip, .pdf",
+                        tenggat_waktu: due
+                    })
+                });
+
+                closeModal("modalEditTugas");
+                alert("Tugas berhasil diperbarui.");
+                const refreshed = await window.apiFetch(`/api/classrooms/${activeClassroomId}`);
+                if (refreshed?.classroom) {
+                    currentDetail = refreshed.classroom;
+                    renderTasks();
+                }
+            } catch (err) {
+                if (fb) { fb.textContent = err.message || "Gagal mengubah tugas."; fb.className = "classroom-feedback is-visible is-error"; }
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = "Simpan Perubahan"; }
+            }
+        });
+    }
+
+    // 7. Edit Pengumuman
+    const formEditAnnouncement = document.getElementById("formEditAnnouncement");
+    if (formEditAnnouncement) {
+        formEditAnnouncement.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const annId = document.getElementById("editAnnouncementId")?.value;
+            const konten = document.getElementById("editAnnouncementKonten")?.value.trim();
+            const fb = document.getElementById("feedbackEditAnnouncement");
+            const btn = document.getElementById("btnSubmitEditAnnouncement");
+
+            if (!konten) {
+                if (fb) { fb.textContent = "Konten pengumuman tidak boleh kosong."; fb.className = "classroom-feedback is-visible is-error"; }
+                return;
+            }
+
+            if (btn) { btn.disabled = true; btn.textContent = "Menyimpan..."; }
+
+            try {
+                await window.apiFetch(`/api/announcements/${annId}`, {
+                    method: "PUT",
+                    body: JSON.stringify({ konten: konten })
+                });
+
+                closeModal("modalEditAnnouncement");
+                alert("Pengumuman berhasil diperbarui.");
+                const refreshed = await window.apiFetch(`/api/classrooms/${activeClassroomId}`);
+                if (refreshed?.classroom) {
+                    currentDetail = refreshed.classroom;
+                    updateHeader();
+                    renderAnnouncements();
+                }
+            } catch (err) {
+                if (fb) { fb.textContent = err.message || "Gagal mengubah pengumuman."; fb.className = "classroom-feedback is-visible is-error"; }
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = "Simpan Pengumuman"; }
             }
         });
     }

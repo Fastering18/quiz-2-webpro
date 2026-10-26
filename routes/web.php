@@ -42,4 +42,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', function () {
         return view('profile');
     })->name('profile');
+
+    Route::get('/admin-panel', function () {
+        return view('admin-panel');
+    })->name('admin-panel');
 });

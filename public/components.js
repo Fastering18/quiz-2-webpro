@@ -168,11 +168,13 @@ class MySidebar extends HTMLElement {
     connectedCallback() {
         const activePage = this.getAttribute('active') || '';
         let isDosen = false;
+        let isAdmin = false;
         try {
             const raw = localStorage.getItem('user');
             if (raw) {
                 const u = JSON.parse(raw);
                 isDosen = u.role === 'dosen';
+                isAdmin = u.role === 'admin';
             }
         } catch (e) {}
 
@@ -184,6 +186,10 @@ class MySidebar extends HTMLElement {
             { id: 'admin',     name: 'Lapor Admin',                url: '/lapor-admin', icon: 'Speech Bubble.svg' },
             { id: 'profile',   name: 'Profil',                     url: '/profile',     icon: 'User.svg' },
         ];
+
+        if (isAdmin) {
+            menuItems.push({ id: 'admin-panel', name: 'Admin Panel', url: '/admin-panel', icon: 'Admin.svg' });
+        }
 
         const navHtml = menuItems.map(function (item) {
             const isActive = activePage === item.id ? 'active' : '';

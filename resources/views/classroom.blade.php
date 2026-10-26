@@ -8,6 +8,25 @@
     <link rel="stylesheet" href="/global.css">
     <link rel="stylesheet" href="/dashboard.css">
     <script src="/components.js"></script>
+    <style>
+        .btn-action-small {
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s;
+        }
+        .btn-action-secondary { background: #F1F5F9; color: #334155; border-color: #CBD5E1; }
+        .btn-action-secondary:hover { background: #E2E8F0; }
+        .btn-action-danger { background: #FEF2F2; color: #B42318; border-color: #FECACA; }
+        .btn-action-danger:hover { background: #FEE2E2; }
+    </style>
 </head>
 <body>
     <my-topbar></my-topbar>
@@ -263,6 +282,144 @@
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" data-close-modal="modalTugas">Batal</button>
                     <button type="submit" class="btn-primary-small" id="btnSubmitTugas">Terbitkan Tugas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================
+         MODAL: EDIT PERTEMUAN / SECTION (DOSEN/ADMIN)
+    ======================================================== -->
+    <div class="modal-overlay" id="modalEditSection" role="dialog" aria-modal="true">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>Edit Pertemuan / Bagian Kelas</h3>
+                <button class="modal-close" data-close-modal="modalEditSection" aria-label="Tutup">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <form id="formEditSection" novalidate>
+                <input type="hidden" id="editSectionId">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label for="editSectionNama" style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Judul Pertemuan *</label>
+                        <input type="text" id="editSectionNama" class="form-input" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label for="editSectionRingkasanJudul" style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Subjudul Ringkasan (Opsional)</label>
+                        <input type="text" id="editSectionRingkasanJudul" class="form-input">
+                    </div>
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label for="editSectionRingkasanKonten" style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Catatan Ringkasan Materi</label>
+                        <textarea id="editSectionRingkasanKonten" class="form-textarea" rows="4"></textarea>
+                    </div>
+                    <p class="classroom-feedback" id="feedbackEditSection" role="status"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-close-modal="modalEditSection">Batal</button>
+                    <button type="submit" class="btn-primary-small" id="btnSubmitEditSection">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================
+         MODAL: EDIT MATERI (DOSEN/ADMIN)
+    ======================================================== -->
+    <div class="modal-overlay" id="modalEditMateri" role="dialog" aria-modal="true">
+        <div class="modal-box" style="max-width:540px;">
+            <div class="modal-header">
+                <h3>Edit Materi Perkuliahan</h3>
+                <button class="modal-close" data-close-modal="modalEditMateri" aria-label="Tutup">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <form id="formEditMateri" novalidate>
+                <input type="hidden" id="editMateriId">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label for="editMateriJudul" style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Judul Dokumen / Materi *</label>
+                        <input type="text" id="editMateriJudul" class="form-input" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label for="editMateriFile" style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Ganti Berkas (Opsional, kosongkan jika tetap)</label>
+                        <input type="file" id="editMateriFile" class="form-input">
+                    </div>
+                    <p class="classroom-feedback" id="feedbackEditMateri" role="status"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-close-modal="modalEditMateri">Batal</button>
+                    <button type="submit" class="btn-primary-small" id="btnSubmitEditMateri">Simpan Materi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================
+         MODAL: EDIT TUGAS (DOSEN/ADMIN)
+    ======================================================== -->
+    <div class="modal-overlay" id="modalEditTugas" role="dialog" aria-modal="true">
+        <div class="modal-box" style="max-width:600px;">
+            <div class="modal-header">
+                <h3>Edit Tugas Perkuliahan</h3>
+                <button class="modal-close" data-close-modal="modalEditTugas" aria-label="Tutup">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <form id="formEditTugas" novalidate>
+                <input type="hidden" id="editTugasId">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label for="editTugasJudul" style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Judul Tugas *</label>
+                        <input type="text" id="editTugasJudul" class="form-input" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label for="editTugasDeskripsi" style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Instruksi Tugas</label>
+                        <textarea id="editTugasDeskripsi" class="form-textarea" rows="4"></textarea>
+                    </div>
+                    <div class="form-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+                        <div class="form-group">
+                            <label for="editTugasFormat" style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Format Berkas</label>
+                            <input type="text" id="editTugasFormat" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="editTugasDue" style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Tenggat Waktu *</label>
+                            <input type="datetime-local" id="editTugasDue" class="form-input" required>
+                        </div>
+                    </div>
+                    <p class="classroom-feedback" id="feedbackEditTugas" role="status"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-close-modal="modalEditTugas">Batal</button>
+                    <button type="submit" class="btn-primary-small" id="btnSubmitEditTugas">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================
+         MODAL: EDIT PENGUMUMAN (DOSEN/ADMIN)
+    ======================================================== -->
+    <div class="modal-overlay" id="modalEditAnnouncement" role="dialog" aria-modal="true">
+        <div class="modal-box" style="max-width:540px;">
+            <div class="modal-header">
+                <h3>Edit Pengumuman Kelas</h3>
+                <button class="modal-close" data-close-modal="modalEditAnnouncement" aria-label="Tutup">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <form id="formEditAnnouncement" novalidate>
+                <input type="hidden" id="editAnnouncementId">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label for="editAnnouncementKonten" style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Isi Pengumuman *</label>
+                        <textarea id="editAnnouncementKonten" class="form-textarea" rows="4" required></textarea>
+                    </div>
+                    <p class="classroom-feedback" id="feedbackEditAnnouncement" role="status"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-close-modal="modalEditAnnouncement">Batal</button>
+                    <button type="submit" class="btn-primary-small" id="btnSubmitEditAnnouncement">Simpan Pengumuman</button>
                 </div>
             </form>
         </div>

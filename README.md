@@ -14,9 +14,9 @@ Web classroom ITS reverse engineered.
 
 ---
 
-## 2. Page Routing & URL Structure
-
-...
+## 2. Features
+1. Login, role: mahasiswa, dosen, admin
+2. 
 
 ---
 

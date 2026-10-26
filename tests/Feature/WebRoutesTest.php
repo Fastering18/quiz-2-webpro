@@ -26,7 +26,7 @@ class WebRoutesTest extends TestCase
 
     public function test_guest_is_redirected_to_login_from_protected_pages(): void
     {
-        $protectedRoutes = ['/portal', '/classroom', '/library', '/krs', '/lapor-admin', '/profile'];
+        $protectedRoutes = ['/portal', '/classroom', '/library', '/krs', '/lapor-admin', '/profile', '/admin-panel'];
 
         foreach ($protectedRoutes as $route) {
             $response = $this->get($route);
@@ -45,7 +45,7 @@ class WebRoutesTest extends TestCase
 
     public function test_authenticated_user_can_access_all_dashboard_views(): void
     {
-        $user = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
+        $user = User::where('role', 'admin')->orderBy('user_id')->first();
 
         $views = [
             '/portal' => 'portal',
@@ -54,6 +54,7 @@ class WebRoutesTest extends TestCase
             '/krs' => 'krs',
             '/lapor-admin' => 'lapor-admin',
             '/profile' => 'profile',
+            '/admin-panel' => 'admin-panel',
         ];
 
         foreach ($views as $uri => $viewName) {
