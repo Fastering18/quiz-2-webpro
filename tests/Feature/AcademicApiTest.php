@@ -24,7 +24,7 @@ class AcademicApiTest extends TestCase
 
     public function test_user_can_login_and_access_me(): void
     {
-        $user = User::first();
+        $user = User::orderBy('user_id')->first();
         $user->update(['password_hash' => Hash::make('testpass123')]);
 
         $response = $this->postJson('/api/login', [
@@ -52,7 +52,7 @@ class AcademicApiTest extends TestCase
 
     public function test_student_can_fetch_dashboard(): void
     {
-        $student = User::where('role', 'mahasiswa')->first();
+        $student = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
         Sanctum::actingAs($student);
 
         $response = $this->getJson('/api/dashboard');
@@ -71,7 +71,7 @@ class AcademicApiTest extends TestCase
 
     public function test_student_can_view_enrolled_classrooms_and_details(): void
     {
-        $student = User::where('role', 'mahasiswa')->first();
+        $student = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
         Sanctum::actingAs($student);
 
         $listResponse = $this->getJson('/api/classrooms');
@@ -94,10 +94,10 @@ class AcademicApiTest extends TestCase
 
     public function test_student_can_view_and_submit_task(): void
     {
-        $student = User::where('role', 'mahasiswa')->first();
+        $student = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
         Sanctum::actingAs($student);
 
-        $task = TugasKelas::first();
+        $task = TugasKelas::orderBy('tugas_id')->first();
 
         $showResponse = $this->getJson('/api/tasks/'.$task->tugas_id);
         $showResponse->assertStatus(200)
@@ -121,10 +121,10 @@ class AcademicApiTest extends TestCase
 
     public function test_dosen_can_grade_submission(): void
     {
-        $dosen = User::where('role', 'dosen')->first();
+        $dosen = User::where('role', 'dosen')->orderBy('user_id')->first();
         Sanctum::actingAs($dosen);
 
-        $submission = PengumpulanTugas::first();
+        $submission = PengumpulanTugas::orderBy('submit_id')->first();
 
         $response = $this->postJson('/api/submissions/'.$submission->submit_id.'/grade', [
             'nilai_tugas' => 98,
@@ -142,14 +142,14 @@ class AcademicApiTest extends TestCase
 
     public function test_student_can_view_and_submit_krs(): void
     {
-        $student = User::where('role', 'mahasiswa')->first();
+        $student = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
         Sanctum::actingAs($student);
 
         $indexResponse = $this->getJson('/api/krs');
         $indexResponse->assertStatus(200)
             ->assertJsonStructure(['krs_list']);
 
-        $krs = Krs::first();
+        $krs = Krs::where('krs_id', 'KRS_2026G_5025251131')->first();
         $showResponse = $this->getJson('/api/krs/'.$krs->krs_id);
         $showResponse->assertStatus(200)
             ->assertJsonPath('krs.krs_id', $krs->krs_id)
@@ -168,10 +168,10 @@ class AcademicApiTest extends TestCase
 
     public function test_dosen_can_approve_krs(): void
     {
-        $dosen = User::where('role', 'dosen')->first();
+        $dosen = User::where('role', 'dosen')->orderBy('user_id')->first();
         Sanctum::actingAs($dosen);
 
-        $krs = Krs::first();
+        $krs = Krs::where('krs_id', 'KRS_2026G_5025251131')->first();
 
         $response = $this->patchJson('/api/krs/'.$krs->krs_id.'/approve', [
             'status_acc' => 'Disetujui',
@@ -188,7 +188,7 @@ class AcademicApiTest extends TestCase
 
     public function test_dosen_can_create_section_material_and_task(): void
     {
-        $dosen = User::where('role', 'dosen')->first();
+        $dosen = User::where('role', 'dosen')->orderBy('user_id')->first();
         Sanctum::actingAs($dosen);
 
         // 1. Create Section

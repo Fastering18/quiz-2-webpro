@@ -54,17 +54,17 @@ class FileUploadTest extends TestCase
 
     private function student(): User
     {
-        return User::where('role', 'mahasiswa')->first();
+        return User::where('role', 'mahasiswa')->orderBy('user_id')->first();
     }
 
     private function outsider(): User
     {
         $u = User::create([
-            'user_id' => 'id_out', 'username' => 'outsider', 'nama_lengkap' => 'Luar Kelas',
+            'user_id' => 'zz_out', 'username' => 'outsider', 'nama_lengkap' => 'Luar Kelas',
             'email' => 'out@student.its.ac.id', 'password_hash' => Hash::make('x'), 'role' => 'mahasiswa',
         ]);
         Mahasiswa::create([
-            'nrp' => '5025259999', 'user_id' => $u->user_id, 'nip_wali' => Dosen::first()->nip,
+            'nrp' => '5025259999', 'user_id' => $u->user_id, 'nip_wali' => Dosen::orderBy('nip')->first()->nip,
             'departemen' => 'TI', 'semester_aktif' => 1, 'status' => 'Aktif',
         ]);
 
@@ -74,7 +74,7 @@ class FileUploadTest extends TestCase
     private function otherDosen(): User
     {
         $u = User::create([
-            'user_id' => 'id_d2', 'username' => 'dosen2', 'nama_lengkap' => 'Dosen Lain',
+            'user_id' => 'zz_d2', 'username' => 'dosen2', 'nama_lengkap' => 'Dosen Lain',
             'email' => 'd2@its.ac.id', 'password_hash' => Hash::make('x'), 'role' => 'dosen',
         ]);
         Dosen::create(['nip' => '2022099', 'user_id' => $u->user_id, 'departemen' => 'TI', 'status' => 'Aktif']);
@@ -84,8 +84,8 @@ class FileUploadTest extends TestCase
 
     public function test_dosen_uploads_material_and_class_members_download_it(): void
     {
-        $section = BagianKelas::where('kelas_id', 'CLS_SO_B')->first();
-        Sanctum::actingAs(User::where('role', 'dosen')->first());
+        $section = BagianKelas::where('kelas_id', 'CLS_SO_B')->orderBy('bagian_id')->first();
+        Sanctum::actingAs(User::where('role', 'dosen')->orderBy('user_id')->first());
 
         $res = $this->post('/api/sections/'.$section->bagian_id.'/materials', [
             'judul_materi' => 'Slide Nyata',
@@ -125,13 +125,13 @@ class FileUploadTest extends TestCase
             ->assertStatus(403);
 
         // admin: allowed
-        Sanctum::actingAs(User::where('role', 'admin')->first());
+        Sanctum::actingAs(User::where('role', 'admin')->orderBy('user_id')->first());
         $this->getJson('/api/files/materials/'.$id)->assertStatus(200);
     }
 
     public function test_student_cannot_upload_material(): void
     {
-        $section = BagianKelas::where('kelas_id', 'CLS_SO_B')->first();
+        $section = BagianKelas::where('kelas_id', 'CLS_SO_B')->orderBy('bagian_id')->first();
         Sanctum::actingAs($this->student());
 
         $this->post('/api/sections/'.$section->bagian_id.'/materials', ['judul_materi' => 'x', 'file' => $this->pdf()], ['Accept' => 'application/json'])
@@ -140,8 +140,8 @@ class FileUploadTest extends TestCase
 
     public function test_material_validation_for_size_and_type(): void
     {
-        $section = BagianKelas::where('kelas_id', 'CLS_SO_B')->first();
-        Sanctum::actingAs(User::where('role', 'dosen')->first());
+        $section = BagianKelas::where('kelas_id', 'CLS_SO_B')->orderBy('bagian_id')->first();
+        Sanctum::actingAs(User::where('role', 'dosen')->orderBy('user_id')->first());
         $url = '/api/sections/'.$section->bagian_id.'/materials';
         $h = ['Accept' => 'application/json'];
 
@@ -166,8 +166,8 @@ class FileUploadTest extends TestCase
 
     public function test_legacy_key_string_still_accepted_but_not_into_structured_namespaces(): void
     {
-        $section = BagianKelas::where('kelas_id', 'CLS_SO_B')->first();
-        Sanctum::actingAs(User::where('role', 'dosen')->first());
+        $section = BagianKelas::where('kelas_id', 'CLS_SO_B')->orderBy('bagian_id')->first();
+        Sanctum::actingAs(User::where('role', 'dosen')->orderBy('user_id')->first());
         $url = '/api/sections/'.$section->bagian_id.'/materials';
 
         $this->postJson($url, ['judul_materi' => 'Lama', 'nama_file' => 'a.pdf', 'file_materi_key' => 'materials/legacy.pdf'])
@@ -181,7 +181,7 @@ class FileUploadTest extends TestCase
 
     public function test_student_submits_replaces_and_downloads_submission(): void
     {
-        $task = TugasKelas::first(); // zip,pdf,c
+        $task = TugasKelas::orderBy('tugas_id')->first(); // zip,pdf,c
         $task->update(['tenggat_waktu' => now()->addDays(3)]);
         $student = $this->student();
         Sanctum::actingAs($student);
@@ -218,15 +218,15 @@ class FileUploadTest extends TestCase
         $this->getJson('/api/files/submissions/'.$id)->assertStatus(403);
         Sanctum::actingAs($this->otherDosen());
         $this->getJson('/api/files/submissions/'.$id)->assertStatus(403);
-        Sanctum::actingAs(User::where('role', 'dosen')->first());
+        Sanctum::actingAs(User::where('role', 'dosen')->orderBy('user_id')->first());
         $this->getJson('/api/files/submissions/'.$id)->assertStatus(200);
-        Sanctum::actingAs(User::where('role', 'admin')->first());
+        Sanctum::actingAs(User::where('role', 'admin')->orderBy('user_id')->first());
         $this->getJson('/api/files/submissions/'.$id)->assertStatus(200);
     }
 
     public function test_submission_rules_format_membership_and_late_flag(): void
     {
-        $task = TugasKelas::first();
+        $task = TugasKelas::orderBy('tugas_id')->first();
         $h = ['Accept' => 'application/json'];
 
         // outsider (not in KRS of the class) cannot submit
@@ -256,7 +256,7 @@ class FileUploadTest extends TestCase
             ->assertStatus(200)->assertJsonPath('submission.terlambat', false);
 
         // dosen cannot submit
-        Sanctum::actingAs(User::where('role', 'dosen')->first());
+        Sanctum::actingAs(User::where('role', 'dosen')->orderBy('user_id')->first());
         $this->post('/api/tasks/'.$task->tugas_id.'/submit', ['file' => $this->pdf()], $h)->assertStatus(403);
     }
 
@@ -266,7 +266,7 @@ class FileUploadTest extends TestCase
         Sanctum::actingAs($this->student());
         $this->post('/api/library', ['judul_buku' => 'x', 'penulis' => 'y', 'kategori' => 'z', 'file' => $this->pdf()], $h)->assertStatus(403);
 
-        Sanctum::actingAs(User::where('role', 'dosen')->first());
+        Sanctum::actingAs(User::where('role', 'dosen')->orderBy('user_id')->first());
         $res = $this->post('/api/library', [
             'judul_buku' => 'Buku Nyata', 'penulis' => 'Penulis', 'kategori' => 'Test', 'tahun' => 2024,
             'file' => $this->pdf('Buku Nyata.pdf', 300),
@@ -284,7 +284,7 @@ class FileUploadTest extends TestCase
         $this->getJson('/api/library')->assertJsonStructure(['books' => ['data' => [['file_url']]]]);
 
         // admin replaces the file (multipart POST) -> old object removed
-        Sanctum::actingAs(User::where('role', 'admin')->first());
+        Sanctum::actingAs(User::where('role', 'admin')->orderBy('user_id')->first());
         $upd = $this->post('/api/admin/library/'.$id, ['judul_buku' => 'Buku Baru', 'file' => $this->pdf('v2.pdf')], $h)->assertStatus(200);
         $key2 = $upd->json('book.file_dokumen_key');
         $this->assertNotSame($key, $key2);
@@ -292,22 +292,22 @@ class FileUploadTest extends TestCase
         Storage::disk('s3')->assertExists($key2);
 
         // delete removes the object (dosen route)
-        Sanctum::actingAs(User::where('role', 'dosen')->first());
+        Sanctum::actingAs(User::where('role', 'dosen')->orderBy('user_id')->first());
         $this->deleteJson('/api/library/'.$id)->assertStatus(200);
         Storage::disk('s3')->assertMissing($key2);
 
         // admin delete route too
-        Sanctum::actingAs(User::where('role', 'dosen')->first());
+        Sanctum::actingAs(User::where('role', 'dosen')->orderBy('user_id')->first());
         $id2 = $this->post('/api/library', ['judul_buku' => 'B2', 'penulis' => 'p', 'kategori' => 'k', 'file' => $this->pdf()], $h)->json('book.buku_id');
         $k = Perpustakaan::find($id2)->file_dokumen_key;
-        Sanctum::actingAs(User::where('role', 'admin')->first());
+        Sanctum::actingAs(User::where('role', 'admin')->orderBy('user_id')->first());
         $this->deleteJson('/api/admin/library/'.$id2)->assertStatus(200);
         Storage::disk('s3')->assertMissing($k);
     }
 
     public function test_library_validation(): void
     {
-        Sanctum::actingAs(User::where('role', 'dosen')->first());
+        Sanctum::actingAs(User::where('role', 'dosen')->orderBy('user_id')->first());
         $h = ['Accept' => 'application/json'];
 
         $this->post('/api/library', ['judul_buku' => 'x', 'penulis' => 'y', 'kategori' => 'z', 'file' => UploadedFile::fake()->create('a.exe', 5)], $h)
@@ -337,9 +337,9 @@ class FileUploadTest extends TestCase
 
         Sanctum::actingAs($this->outsider());
         $this->getJson('/api/files/reports/'.$id)->assertStatus(403);
-        Sanctum::actingAs(User::where('role', 'dosen')->first());
+        Sanctum::actingAs(User::where('role', 'dosen')->orderBy('user_id')->first());
         $this->getJson('/api/files/reports/'.$id)->assertStatus(403);
-        Sanctum::actingAs(User::where('role', 'admin')->first());
+        Sanctum::actingAs(User::where('role', 'admin')->orderBy('user_id')->first());
         $this->getJson('/api/files/reports/'.$id)->assertStatus(200);
 
         // too large / wrong type
@@ -371,7 +371,7 @@ class FileUploadTest extends TestCase
         Storage::disk('s3')->assertExists($key2);
 
         // any authenticated user can fetch an avatar
-        Sanctum::actingAs(User::where('role', 'dosen')->first());
+        Sanctum::actingAs(User::where('role', 'dosen')->orderBy('user_id')->first());
         $this->getJson('/api/files/avatars/'.$student->user_id)->assertStatus(200)->assertJsonStructure(['url']);
 
         // size (2 MB) and type
@@ -386,7 +386,7 @@ class FileUploadTest extends TestCase
 
     public function test_unknown_kind_and_missing_object(): void
     {
-        Sanctum::actingAs(User::where('role', 'admin')->first());
+        Sanctum::actingAs(User::where('role', 'admin')->orderBy('user_id')->first());
         $this->getJson('/api/files/secrets/1')->assertStatus(404);
 
         // seeded materials have fake keys without a real object
@@ -399,8 +399,8 @@ class FileUploadTest extends TestCase
         config(['filesystems.disks.s3.bucket' => null]);
         Storage::fake('local');
 
-        $section = BagianKelas::where('kelas_id', 'CLS_SO_B')->first();
-        Sanctum::actingAs(User::where('role', 'dosen')->first());
+        $section = BagianKelas::where('kelas_id', 'CLS_SO_B')->orderBy('bagian_id')->first();
+        Sanctum::actingAs(User::where('role', 'dosen')->orderBy('user_id')->first());
         $res = $this->post('/api/sections/'.$section->bagian_id.'/materials', [
             'judul_materi' => 'Lokal', 'file' => $this->pdf('lokal.pdf'),
         ], ['Accept' => 'application/json'])->assertStatus(201);
@@ -418,7 +418,7 @@ class FileUploadTest extends TestCase
     public function test_deleting_material_submission_task_and_section_removes_files(): void
     {
         $h = ['Accept' => 'application/json'];
-        $dosen = User::where('role', 'dosen')->first();
+        $dosen = User::where('role', 'dosen')->orderBy('user_id')->first();
         Sanctum::actingAs($dosen);
 
         $sec = $this->postJson('/api/classrooms/CLS_SO_B/sections', ['judul_bagian' => 'Hapus'])->json('section.bagian_id');

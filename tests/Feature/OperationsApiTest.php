@@ -22,7 +22,7 @@ class OperationsApiTest extends TestCase
 
     public function test_library_index_and_search(): void
     {
-        $student = User::where('role', 'mahasiswa')->first();
+        $student = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
         Sanctum::actingAs($student);
 
         $response = $this->getJson('/api/library?search=Operating');
@@ -37,7 +37,7 @@ class OperationsApiTest extends TestCase
 
     public function test_admin_can_add_and_delete_library_book(): void
     {
-        $admin = User::where('role', 'admin')->first();
+        $admin = User::where('role', 'admin')->orderBy('user_id')->first();
         Sanctum::actingAs($admin);
 
         $createResponse = $this->postJson('/api/library', [
@@ -69,7 +69,7 @@ class OperationsApiTest extends TestCase
 
     public function test_student_can_create_report_ticket(): void
     {
-        $student = User::where('role', 'mahasiswa')->first();
+        $student = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
         Sanctum::actingAs($student);
 
         $response = $this->postJson('/api/reports', [
@@ -92,10 +92,10 @@ class OperationsApiTest extends TestCase
 
     public function test_admin_can_reply_to_ticket(): void
     {
-        $admin = User::where('role', 'admin')->first();
+        $admin = User::where('role', 'admin')->orderBy('user_id')->first();
         Sanctum::actingAs($admin);
 
-        $report = LaporanAdmin::first();
+        $report = LaporanAdmin::orderBy('tiket_id')->first();
 
         $response = $this->patchJson('/api/reports/'.$report->tiket_id.'/reply', [
             'tanggapan_admin' => 'Kendala telah diselesaikan oleh tim IT, silakan dicoba kembali.',
@@ -115,7 +115,7 @@ class OperationsApiTest extends TestCase
 
     public function test_user_can_view_and_update_profile(): void
     {
-        $student = User::where('role', 'mahasiswa')->first();
+        $student = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
         Sanctum::actingAs($student);
 
         $showResponse = $this->getJson('/api/profile');
@@ -139,7 +139,7 @@ class OperationsApiTest extends TestCase
 
     public function test_user_can_change_password(): void
     {
-        $student = User::where('role', 'mahasiswa')->first();
+        $student = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
         $student->update(['password_hash' => Hash::make('oldpassword123')]);
         Sanctum::actingAs($student);
 
@@ -158,11 +158,11 @@ class OperationsApiTest extends TestCase
 
     public function test_admin_reports_are_sorted_by_unanswered_first_and_latest(): void
     {
-        $admin = User::where('role', 'admin')->first();
+        $admin = User::where('role', 'admin')->orderBy('user_id')->first();
         Sanctum::actingAs($admin);
 
         // Seed 1 answered older, 1 answered newer, 1 unanswered older, 1 unanswered newer
-        $student = User::where('role', 'mahasiswa')->first();
+        $student = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
 
         $answeredOld = LaporanAdmin::create([
             'tiket_id' => 'TKT_ANS_OLD',

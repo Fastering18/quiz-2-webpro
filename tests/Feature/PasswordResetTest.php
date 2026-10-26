@@ -41,7 +41,7 @@ class PasswordResetTest extends TestCase
     public function test_forgot_sends_mail_with_link_and_token_and_same_response_for_unknown(): void
     {
         Mail::fake();
-        $user = User::where('role', 'mahasiswa')->first();
+        $user = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
 
         $known = $this->postJson('/api/forgot-password', ['email' => strtoupper($user->email)]);
         $unknown = $this->postJson('/api/forgot-password', ['email' => 'tidak.ada@example.com']);
@@ -79,7 +79,7 @@ class PasswordResetTest extends TestCase
     public function test_mail_failure_does_not_change_response(): void
     {
         Mail::shouldReceive('to')->andThrow(new \RuntimeException('smtp down'));
-        $user = User::where('role', 'dosen')->first();
+        $user = User::where('role', 'dosen')->orderBy('user_id')->first();
 
         $this->postJson('/api/forgot-password', ['email' => $user->email])
             ->assertOk()
@@ -88,7 +88,7 @@ class PasswordResetTest extends TestCase
 
     public function test_reset_flow_single_use_and_revokes_tokens(): void
     {
-        $user = User::where('role', 'mahasiswa')->first();
+        $user = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
         $user->createToken('old');
         $mail = $this->requestToken($user);
 
@@ -110,7 +110,7 @@ class PasswordResetTest extends TestCase
 
     public function test_reset_rejects_wrong_token_expired_token_and_weak_or_unconfirmed_password(): void
     {
-        $user = User::where('role', 'mahasiswa')->first();
+        $user = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
         $hash = $user->password_hash;
         $mail = $this->requestToken($user);
         $ok = ['password' => 'BaruPass#2026', 'password_confirmation' => 'BaruPass#2026'];

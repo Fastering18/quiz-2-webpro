@@ -22,7 +22,7 @@ class AdminApiTest extends TestCase
 
     private function actAsAdmin(): User
     {
-        $admin = User::where('role', 'admin')->first();
+        $admin = User::where('role', 'admin')->orderBy('user_id')->first();
         Sanctum::actingAs($admin);
 
         return $admin;
@@ -44,10 +44,10 @@ class AdminApiTest extends TestCase
     {
         $this->getJson('/api/admin/stats')->assertStatus(401);
 
-        Sanctum::actingAs(User::where('role', 'mahasiswa')->first());
+        Sanctum::actingAs(User::where('role', 'mahasiswa')->orderBy('user_id')->first());
         $this->getJson('/api/admin/stats')->assertStatus(403)->assertJsonStructure(['message']);
 
-        Sanctum::actingAs(User::where('role', 'dosen')->first());
+        Sanctum::actingAs(User::where('role', 'dosen')->orderBy('user_id')->first());
         $this->getJson('/api/admin/users')->assertStatus(403);
         $this->postJson('/api/admin/users', [])->assertStatus(403);
     }
@@ -91,7 +91,7 @@ class AdminApiTest extends TestCase
 
         // the generated password works
         $this->postJson('/api/login', ['username' => 'dosen2', 'password' => $generated])->assertStatus(200);
-        Sanctum::actingAs(User::where('role', 'admin')->first());
+        Sanctum::actingAs(User::where('role', 'admin')->orderBy('user_id')->first());
 
         // mahasiswa linked to the new wali, with given password
         $this->postJson('/api/admin/users', [
@@ -143,7 +143,7 @@ class AdminApiTest extends TestCase
         $this->getJson('/api/admin/users?q=lontong')->assertJsonCount(1, 'data');
         $this->getJson('/api/admin/users?role=bogus')->assertStatus(422);
 
-        $mhs = User::where('role', 'mahasiswa')->first();
+        $mhs = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
         $this->getJson('/api/admin/users/'.$mhs->user_id)->assertStatus(200)
             ->assertJsonPath('user.mahasiswa.nrp', $mhs->mahasiswa->nrp);
         $this->getJson('/api/admin/users/nope')->assertStatus(404);
@@ -166,7 +166,7 @@ class AdminApiTest extends TestCase
         $this->actAsAdmin();
         $this->postJson('/api/admin/users', $this->newDosenPayload())->assertStatus(201);
 
-        $mhs = Mahasiswa::first();
+        $mhs = Mahasiswa::orderBy('nrp')->first();
 
         $this->putJson('/api/admin/mahasiswa/'.$mhs->nrp, ['nip_wali' => '2022022', 'status' => 'Cuti'])
             ->assertStatus(200)
@@ -193,11 +193,11 @@ class AdminApiTest extends TestCase
         $this->assertDatabaseHas('pengguna', ['user_id' => $admin->user_id]);
 
         // dosen wali with students and classes -> 409
-        $dosen = Dosen::first();
+        $dosen = Dosen::orderBy('nip')->first();
         $this->deleteJson('/api/admin/users/'.$dosen->user_id)->assertStatus(409)->assertJsonStructure(['message']);
 
         // mahasiswa with KRS -> 409
-        $mhs = Mahasiswa::first();
+        $mhs = Mahasiswa::orderBy('nrp')->first();
         $this->deleteJson('/api/admin/users/'.$mhs->user_id)->assertStatus(409);
 
         // fresh mahasiswa without dependents -> deleted
@@ -214,7 +214,7 @@ class AdminApiTest extends TestCase
     public function test_mata_kuliah_and_kelas_crud(): void
     {
         $this->actAsAdmin();
-        $nip = Dosen::first()->nip;
+        $nip = Dosen::orderBy('nip')->first()->nip;
 
         $this->postJson('/api/admin/mata-kuliah', ['kode_mk' => 'IF999', 'nama_mk' => 'Kecerdasan Buatan', 'sks' => 3, 'semester' => 5])
             ->assertStatus(201);
@@ -243,7 +243,7 @@ class AdminApiTest extends TestCase
     public function test_krs_override_and_library_moderation(): void
     {
         $this->actAsAdmin();
-        $mhs = Mahasiswa::first();
+        $mhs = Mahasiswa::orderBy('nrp')->first();
 
         $krs = $this->postJson('/api/admin/krs', [
             'nrp' => $mhs->nrp, 'semester' => 4, 'semester_tahun' => '2026/Genap', 'kelas_ids' => ['CLS_SO_B'],

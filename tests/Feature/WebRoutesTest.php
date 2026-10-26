@@ -36,7 +36,7 @@ class WebRoutesTest extends TestCase
 
     public function test_authenticated_user_is_redirected_to_portal_from_root(): void
     {
-        $user = User::where('role', 'mahasiswa')->first();
+        $user = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
 
         $response = $this->actingAs($user)->get('/');
 
@@ -45,7 +45,7 @@ class WebRoutesTest extends TestCase
 
     public function test_authenticated_user_can_access_all_dashboard_views(): void
     {
-        $user = User::where('role', 'mahasiswa')->first();
+        $user = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
 
         $views = [
             '/portal' => 'portal',

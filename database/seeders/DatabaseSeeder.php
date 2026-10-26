@@ -77,9 +77,9 @@ class DatabaseSeeder extends Seeder
     private function seedDosen(): array
     {
         $rows = [
-            'd1' => ['198501012010121001', 'dosen_sarwosri', 'Dr. Sarwosri, S.Kom., M.T.', 'sarwosri@its.ac.id', 'Teknik Informatika', '081200000001', 'Keputih, Sukolilo, Surabaya'],
-            'd2' => ['197803152005011002', 'dosen_bambang', 'Prof. Dr. Ir. Bambang Nugroho, M.Sc.', 'bambang@its.ac.id', 'Teknik Informatika', '081200000002', 'Gebang Putih, Sukolilo, Surabaya'],
-            'd3' => ['198208202008012003', 'dosen_rina', 'Dr. Rina Kartika, S.T., M.Sc.', 'rina.kartika@its.ac.id', 'Sistem Informasi', '081200000003', 'Manyar, Surabaya'],
+            'd1' => ['198501012010121001', 'dsn_1_sarwosri', 'Dr. Sarwosri, S.Kom., M.T.', 'sarwosri@its.ac.id', 'Teknik Informatika', '081200000001', 'Keputih, Sukolilo, Surabaya'],
+            'd2' => ['197803152005011002', 'dsn_2_bambang', 'Prof. Dr. Ir. Bambang Nugroho, M.Sc.', 'bambang@its.ac.id', 'Teknik Informatika', '081200000002', 'Gebang Putih, Sukolilo, Surabaya'],
+            'd3' => ['198208202008012003', 'dsn_3_rina', 'Dr. Rina Kartika, S.T., M.Sc.', 'rina.kartika@its.ac.id', 'Sistem Informasi', '081200000003', 'Manyar, Surabaya'],
         ];
 
         $out = [];

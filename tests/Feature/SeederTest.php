@@ -26,7 +26,7 @@ class SeederTest extends TestCase
 
         $this->assertDatabaseHas('classroom', ['kelas_id' => 'CLS_SO_B']);
 
-        $mahasiswa = Mahasiswa::with('user', 'dosenWali', 'krs.detailKrs.classroom.mataKuliah')->first();
+        $mahasiswa = Mahasiswa::with('user', 'dosenWali', 'krs.detailKrs.classroom.mataKuliah')->orderBy('nrp')->first();
         $this->assertSame('5025251131', $mahasiswa->nrp);
         $this->assertNotNull($mahasiswa->dosenWali);
         $this->assertCount(2, $mahasiswa->krs);

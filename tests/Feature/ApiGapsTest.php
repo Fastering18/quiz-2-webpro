@@ -32,14 +32,14 @@ class ApiGapsTest extends TestCase
 
     private function userOf(string $role): User
     {
-        return User::where('role', $role)->first();
+        return User::where('role', $role)->orderBy('user_id')->first();
     }
 
     /** A dosen that neither teaches CLS_SO_B nor is wali of the seeded student. */
     private function otherDosen(): User
     {
         $u = User::create([
-            'user_id' => 'dosen_other', 'username' => 'dosenlain', 'nama_lengkap' => 'Dosen Lain', 'email' => 'lain@its.ac.id',
+            'user_id' => 'zz_dosen_other', 'username' => 'dosenlain', 'nama_lengkap' => 'Dosen Lain', 'email' => 'lain@its.ac.id',
             'password_hash' => 'password', 'role' => 'dosen',
         ]);
         Dosen::create(['nip' => '9999001', 'user_id' => $u->user_id, 'departemen' => 'Teknik Informatika', 'status' => 'Aktif']);
@@ -99,7 +99,7 @@ class ApiGapsTest extends TestCase
     public function test_krs_pdf_download_and_authorization(): void
     {
         $student = $this->userOf('mahasiswa');
-        $krs = Krs::where('nrp', $student->mahasiswa->nrp)->first();
+        $krs = Krs::where('nrp', $student->mahasiswa->nrp)->where('semester_tahun', '2026/Ganjil')->first();
 
         Sanctum::actingAs($student);
         $r = $this->get("/api/krs/{$krs->krs_id}/pdf");
@@ -120,9 +120,9 @@ class ApiGapsTest extends TestCase
     public function test_student_cannot_read_other_students_krs_and_krs_filter_works(): void
     {
         $mine = $this->userOf('mahasiswa');
-        $other = User::create(['user_id' => 'm2', 'username' => 'mhs2', 'nama_lengkap' => 'M Dua', 'email' => 'm2@s.its.ac.id', 'password_hash' => 'password', 'role' => 'mahasiswa']);
+        $other = User::create(['user_id' => 'zz_m2', 'username' => 'mhs2', 'nama_lengkap' => 'M Dua', 'email' => 'm2@s.its.ac.id', 'password_hash' => 'password', 'role' => 'mahasiswa']);
         $other->mahasiswa()->create(['nrp' => '5025000002', 'nip_wali' => $this->userOf('dosen')->dosen->nip, 'departemen' => 'TI', 'semester_aktif' => 1, 'status' => 'Aktif']);
-        $krs = Krs::where('nrp', $mine->mahasiswa->nrp)->first();
+        $krs = Krs::where('nrp', $mine->mahasiswa->nrp)->where('semester_tahun', '2026/Ganjil')->first();
 
         Sanctum::actingAs($other);
         $this->getJson("/api/krs/{$krs->krs_id}")->assertStatus(403);
@@ -135,7 +135,7 @@ class ApiGapsTest extends TestCase
     public function test_only_dosen_wali_or_admin_can_approve_and_approved_krs_is_locked(): void
     {
         $student = $this->userOf('mahasiswa');
-        $krs = Krs::where('nrp', $student->mahasiswa->nrp)->first();
+        $krs = Krs::where('nrp', $student->mahasiswa->nrp)->where('semester_tahun', '2026/Ganjil')->first();
 
         Sanctum::actingAs($this->otherDosen());
         $this->patchJson("/api/krs/{$krs->krs_id}/approve", ['status_acc' => 'Disetujui'])->assertStatus(403);
@@ -159,7 +159,7 @@ class ApiGapsTest extends TestCase
         $dosen = $this->userOf('dosen');
         Sanctum::actingAs($dosen);
 
-        $ann = PengumumanClassroom::where('kelas_id', 'CLS_SO_B')->first();
+        $ann = PengumumanClassroom::where('kelas_id', 'CLS_SO_B')->orderBy('pengumuman_id')->first();
         $this->putJson("/api/announcements/{$ann->pengumuman_id}", ['konten' => 'Diubah'])->assertOk()->assertJsonPath('announcement.konten', 'Diubah');
         $this->putJson("/api/announcements/{$ann->pengumuman_id}", ['konten' => ''])->assertStatus(422);
 
@@ -200,7 +200,7 @@ class ApiGapsTest extends TestCase
 
     public function test_only_class_dosen_can_grade(): void
     {
-        $sub = PengumpulanTugas::first();
+        $sub = PengumpulanTugas::orderBy('submit_id')->first();
         $this->assertNotNull($sub);
 
         Sanctum::actingAs($this->otherDosen());
