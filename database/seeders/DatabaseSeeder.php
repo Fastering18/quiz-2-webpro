@@ -38,7 +38,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class DatabaseSeeder extends Seeder
 {
-    private const PASSWORD = 'password';
+    private const PASSWORD = 'admin';
 
     private ?string $disk = null;
 
@@ -104,8 +104,8 @@ class DatabaseSeeder extends Seeder
             ['5025251131', 'Muhammad Azka Asyrafany', '5025251131@student.its.ac.id', 'd1', 3, '081234567131', 'Gebang Putih, Sukolilo, Surabaya'],
             ['5025251169', 'Kevin Lontong', 'lontong@student.its.ac.id', 'd1', 3, '081234567169', 'Keputih Tegal, Surabaya'],
             ['5025251132', 'Siti Nurhaliza', '5025251132@student.its.ac.id', 'd1', 3, '081234567132', 'Mulyorejo, Surabaya'],
-            ['5025251140', 'Budi Santoso', '5025251140@student.its.ac.id', 'd2', 3, '081234567140', 'Rungkut, Surabaya'],
-            ['5025251155', 'Dewi Lestari', '5025251155@student.its.ac.id', 'd2', 3, '081234567155', 'Gubeng, Surabaya'],
+            ['5025251128', 'Budiman Setiono', '5025251128@student.its.ac.id', 'd2', 3, '081234567140', 'Rungkut, Surabaya'],
+            ['5025251129', 'Muhammad Brahmana Priambudi', '5025251129@student.its.ac.id', 'd2', 3, '085100879325', 'Houston, Texas'],
             ['5025251172', 'Rizky Pratama', '5025251172@student.its.ac.id', 'd2', 3, '081234567172', 'Wonokromo, Surabaya'],
             ['5025251180', 'Anisa Putri', '5025251180@student.its.ac.id', 'd3', 3, '081234567180', 'Sidoarjo'],
             ['5025251195', 'Fajar Nugroho', '5025251195@student.its.ac.id', 'd3', 3, '081234567195', 'Gresik'],
