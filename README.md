@@ -166,3 +166,4 @@ The S3 client uses `request_checksum_calculation=when_required` (override with `
   Access: materials — students enrolled in the class, the class's dosen, admin; submissions — the owning student, the class's dosen, admin; reports — owner and admin; library and avatars — any authenticated user.
 - Viewing a class (`GET /api/classrooms/{id}`) and a task now requires membership (enrolled student, teaching dosen, or admin); changing class content requires the teaching dosen or admin.
 - Tests use `Storage::fake('s3')`; run them on Postgres with `DB_CONNECTION=pgsql … php artisan test`.
+- Cleanup endpoints (remove the stored files too): `DELETE /api/materials/{id}`, `DELETE /api/tasks/{id}`, `DELETE /api/sections/{id}` (teaching dosen/admin) and `DELETE /api/submissions/{id}` (owner while ungraded, class dosen, admin).

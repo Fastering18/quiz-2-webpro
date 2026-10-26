@@ -44,10 +44,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/classrooms/{id}/sections', [ClassroomController::class, 'storeSection'])->name('api.classrooms.sections.store');
     Route::post('/sections/{id}/materials', [ClassroomController::class, 'storeMaterial'])->name('api.sections.materials.store');
     Route::post('/sections/{id}/tasks', [ClassroomController::class, 'storeTask'])->name('api.sections.tasks.store');
+    Route::delete('/sections/{id}', [ClassroomController::class, 'destroySection'])->name('api.sections.destroy');
+    Route::delete('/materials/{id}', [ClassroomController::class, 'destroyMaterial'])->name('api.materials.destroy');
+    Route::delete('/tasks/{id}', [ClassroomController::class, 'destroyTask'])->name('api.tasks.destroy');
 
     // Tasks & Submissions
     Route::get('/tasks/{id}', [TugasController::class, 'show'])->name('api.tasks.show');
     Route::post('/tasks/{id}/submit', [TugasController::class, 'submit'])->name('api.tasks.submit');
+    Route::delete('/submissions/{id}', [TugasController::class, 'destroySubmission'])->name('api.submissions.destroy');
     Route::post('/submissions/{id}/grade', [TugasController::class, 'grade'])->name('api.submissions.grade');
 
     // KRS (Kartu Rencana Studi)

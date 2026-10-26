@@ -133,6 +133,32 @@ class TugasController extends Controller
     }
 
     /**
+     * Delete a submission (and its file): the owning student, the class's dosen, or an admin.
+     */
+    public function destroySubmission(Request $request, string|int $submitId, FileStorage $files): JsonResponse
+    {
+        $user = $request->user();
+        $submission = PengumpulanTugas::with('tugas.bagianKelas')->findOrFail($submitId);
+
+        $allowed = match ($user->role) {
+            'admin' => true,
+            'dosen' => FileController::canAccessClass($user, (string) $submission->tugas?->bagianKelas?->kelas_id),
+            'mahasiswa' => $user->mahasiswa?->nrp === $submission->nrp && $submission->nilai_tugas === null,
+            default => false,
+        };
+
+        if (! $allowed) {
+            return response()->json(['message' => 'Akses ditolak.'], 403);
+        }
+
+        $key = $submission->file_jawaban_key;
+        $submission->delete();
+        $files->delete($key);
+
+        return response()->json(['message' => 'Pengumpulan tugas berhasil dihapus.']);
+    }
+
+    /**
      * Grade student submission (Dosen / Admin).
      */
     public function grade(Request $request, string|int $submitId): JsonResponse

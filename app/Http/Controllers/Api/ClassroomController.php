@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BagianKelas;
 use App\Models\Classroom;
 use App\Models\MateriKelas;
+use App\Models\PengumpulanTugas;
 use App\Models\PengumumanClassroom;
 use App\Models\TugasKelas;
 use App\Rules\LegacyFileKey;
@@ -198,6 +199,53 @@ class ClassroomController extends Controller
             'message' => 'Materi berhasil diunggah.',
             'material' => $material,
         ], 201);
+    }
+
+    /** Delete a material (and its stored file). */
+    public function destroyMaterial(Request $request, string|int $materiId, FileStorage $files): JsonResponse
+    {
+        $material = MateriKelas::with('bagianKelas')->findOrFail($materiId);
+        $this->authorizeTeaching($request, (string) $material->bagianKelas?->kelas_id);
+
+        $key = $material->file_materi_key;
+        $material->delete();
+        $files->delete($key);
+
+        return response()->json(['message' => 'Materi berhasil dihapus.']);
+    }
+
+    /** Delete a task together with all submissions and their stored files. */
+    public function destroyTask(Request $request, string|int $tugasId, FileStorage $files): JsonResponse
+    {
+        $task = TugasKelas::with('bagianKelas')->findOrFail($tugasId);
+        $this->authorizeTeaching($request, (string) $task->bagianKelas?->kelas_id);
+
+        $this->purgeTask($task, $files);
+
+        return response()->json(['message' => 'Tugas berhasil dihapus.']);
+    }
+
+    /** Delete a section with its materials, tasks, submissions and stored files. */
+    public function destroySection(Request $request, string|int $bagianId, FileStorage $files): JsonResponse
+    {
+        $section = BagianKelas::with(['materi', 'tugas'])->findOrFail($bagianId);
+        $this->authorizeTeaching($request, $section->kelas_id);
+
+        foreach ($section->materi as $m) {
+            $files->delete($m->file_materi_key);
+        }
+        foreach ($section->tugas as $t) {
+            PengumpulanTugas::where('tugas_id', $t->tugas_id)->get()->each(fn ($s) => $files->delete($s->file_jawaban_key));
+        }
+        $section->delete(); // DB rows cascade
+
+        return response()->json(['message' => 'Bagian kelas berhasil dihapus.']);
+    }
+
+    private function purgeTask(TugasKelas $task, FileStorage $files): void
+    {
+        PengumpulanTugas::where('tugas_id', $task->tugas_id)->get()->each(fn ($s) => $files->delete($s->file_jawaban_key));
+        $task->delete();
     }
 
     /** Only the class's lecturer or an admin may modify class content. */

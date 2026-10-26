@@ -413,4 +413,44 @@ class FileUploadTest extends TestCase
         $this->get($url)->assertStatus(200)->assertDownload('lokal.pdf');
         $this->get($url.'x')->assertStatus(403);
     }
+
+    public function test_deleting_material_submission_task_and_section_removes_files(): void
+    {
+        $h = ['Accept' => 'application/json'];
+        $dosen = User::where('role', 'dosen')->first();
+        Sanctum::actingAs($dosen);
+
+        $sec = $this->postJson('/api/classrooms/CLS_SO_B/sections', ['judul_bagian' => 'Hapus'])->json('section.bagian_id');
+        $mat = $this->post('/api/sections/'.$sec.'/materials', ['judul_materi' => 'm', 'file' => $this->pdf()], $h)->json('material');
+        $task = $this->postJson('/api/sections/'.$sec.'/tasks', ['judul_tugas' => 't', 'tenggat_waktu' => now()->addDay()->toDateString(), 'format_file' => 'pdf'])->json('task.tugas_id');
+
+        Sanctum::actingAs($this->student());
+        $sub = $this->post('/api/tasks/'.$task.'/submit', ['file' => $this->pdf('j.pdf')], $h)->json('submission');
+        Storage::disk('s3')->assertExists($sub['file_jawaban_key']);
+
+        // outsider/other dosen can't delete; student can't delete material
+        Sanctum::actingAs($this->otherDosen());
+        $this->deleteJson('/api/materials/'.$mat['materi_id'])->assertStatus(403);
+        $this->deleteJson('/api/submissions/'.$sub['submit_id'])->assertStatus(403);
+        Sanctum::actingAs($this->student());
+        $this->deleteJson('/api/materials/'.$mat['materi_id'])->assertStatus(403);
+
+        // owner deletes own (ungraded) submission
+        $this->deleteJson('/api/submissions/'.$sub['submit_id'])->assertStatus(200);
+        Storage::disk('s3')->assertMissing($sub['file_jawaban_key']);
+
+        Sanctum::actingAs($dosen);
+        $this->deleteJson('/api/materials/'.$mat['materi_id'])->assertStatus(200);
+        Storage::disk('s3')->assertMissing($mat['file_materi_key']);
+
+        // section delete purges remaining material + submission files
+        $mat2 = $this->post('/api/sections/'.$sec.'/materials', ['judul_materi' => 'm2', 'file' => $this->pdf()], $h)->json('material');
+        Sanctum::actingAs($this->student());
+        $sub2 = $this->post('/api/tasks/'.$task.'/submit', ['file' => $this->pdf('k.pdf')], $h)->json('submission');
+        Sanctum::actingAs($dosen);
+        $this->deleteJson('/api/sections/'.$sec)->assertStatus(200);
+        Storage::disk('s3')->assertMissing($mat2['file_materi_key']);
+        Storage::disk('s3')->assertMissing($sub2['file_jawaban_key']);
+        $this->assertDatabaseMissing('tugas_kelas', ['tugas_id' => $task]);
+    }
 }
