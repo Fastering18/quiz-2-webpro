@@ -10,13 +10,30 @@
 
 ## 1. Project Overview
 
-Web classroom ITS reverse engineered. 
+Web classroom ITS smol reverse engineered 
 
 ---
 
-## 2. Features
-1. Login, role: mahasiswa, dosen, admin
-2. 
+## 2. Database Models
+
+### CDM
+![cdm](/docs/cdm.png)  
+### PDM
+![pdm](/docs/pdm.png)
+
+## 3. Features
+1. Login (role: mahasiswa, dosen, admin)  
+2. Dosen setujui frs  
+3. Mahasiswa membaca materi kelas  
+4. Mahasiswa mengerjakan tugas  
+5. Dosen menilai dan mengomentari pengerjaan tugas mahasiswa  
+6. Dosen menambah materi, tugas, atau milestone kelas  
+7. Mahasiswa cetak krs  
+8. Mahasiswa membaca buku di e-perpustakaan  
+9. Dosen/Admin mengelola buku di e-perpustakaan  
+10. Mahasiswa/Dosen melaporkan bug  
+11. Admin membalas laporan bug  
+12. Pengguna(admin/dosen/mahasiswa) dapat menyunting profil  
 
 ---
 
@@ -26,11 +43,10 @@ Web classroom ITS reverse engineered.
 
 ---
 
-## 4. Implementation Details & Architecture
-...
+
 
 ### Conclusion
-
+e
 
 ---
 
