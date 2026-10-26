@@ -244,3 +244,11 @@ Also seeded: 8 mata kuliah, 8 classes (7 in 2026/Ganjil + 1 past), 8 announcemen
 
 Placeholder files: small real PDF/TXT documents are uploaded for materials, submissions and library books to the configured disk (S3 on Render, otherwise the local disk).
 Seeding never fails because of storage: if the disk cannot be written (or `SEED_FILES=false`, or in tests) the rows are created with `file_*_key = null` (`file_url` is `null`).
+
+---
+
+## Documentation
+
+- [docs/FEATURES.md](docs/FEATURES.md): list of implemented features per role and area, with known gaps.
+- [docs/cdm.ddr](docs/cdm.ddr): conceptual data model (ddr `CDM` diagram).
+- [docs/pdm.ddr](docs/pdm.ddr): physical PostgreSQL data model (ddr `PDM` diagram), including the framework system tables.
