@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('pengumpulan_tugas', function (Blueprint $table) {
             $table->id('submit_id');
             $table->foreignId('tugas_id')->constrained('tugas_kelas', 'tugas_id')->cascadeOnDelete();
-            $table->string('nrp', 14);
+            $table->string('nrp', 32);
             $table->string('nama_file');
             $table->string('file_jawaban_key');
             $table->integer('ukuran_file');

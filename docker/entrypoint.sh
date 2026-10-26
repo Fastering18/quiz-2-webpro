@@ -13,8 +13,13 @@ export PORT="${PORT:-10000}"
 # Clear stale caches baked at build time, if any
 php artisan config:clear >/dev/null 2>&1 || true
 
-echo "Running migrations..."
-php artisan migrate --force
+if [ "$RESET_DB" = "1" ]; then
+  echo "RESET_DB=1 - running migrate:fresh..."
+  php artisan migrate:fresh --force
+else
+  echo "Running migrations..."
+  php artisan migrate --force
+fi
 
 # Seed only when the users table (pengguna) is empty
 COUNT=$(php artisan tinker --execute='echo \App\Models\User::count();' 2>/dev/null | tr -dc '0-9')

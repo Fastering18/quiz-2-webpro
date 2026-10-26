@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('pengguna', function (Blueprint $table) {
-            $table->string('user_id', 16)->primary();
+            $table->string('user_id', 64)->primary();
             $table->string('username', 30)->unique();
             $table->string('nama_lengkap', 100);
             $table->string('email', 120)->unique();
@@ -31,7 +31,7 @@ return new class extends Migration
 
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->string('user_id', 16)->nullable()->index();
+            $table->string('user_id', 64)->nullable()->index();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->longText('payload');

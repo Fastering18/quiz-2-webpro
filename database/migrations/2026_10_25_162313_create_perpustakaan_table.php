@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('perpustakaan', function (Blueprint $table) {
-            $table->string('buku_id', 12)->primary();
+            $table->string('buku_id', 64)->primary();
             $table->string('judul_buku', 200);
             $table->string('penulis', 160);
-            $table->string('publisher_id', 16)->nullable();
+            $table->string('publisher_id', 64)->nullable();
             $table->integer('tahun')->nullable();
             $table->string('kategori', 40);
             $table->string('nama_file');

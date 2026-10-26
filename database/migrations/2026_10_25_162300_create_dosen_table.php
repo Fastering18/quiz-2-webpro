@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('dosen', function (Blueprint $table) {
-            $table->string('nip', 18)->primary();
-            $table->string('user_id', 16)->unique();
+            $table->string('nip', 32)->primary();
+            $table->string('user_id', 64)->unique();
             $table->string('departemen', 80);
             $table->string('status', 20);
 

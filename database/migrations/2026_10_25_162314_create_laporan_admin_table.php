@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('laporan_admin', function (Blueprint $table) {
-            $table->string('tiket_id', 16)->primary();
-            $table->string('user_id', 16);
+            $table->string('tiket_id', 64)->primary();
+            $table->string('user_id', 64);
             $table->string('kategori_modul', 40);
             $table->string('judul_laporan', 150);
             $table->string('deskripsi_kendala', 2000);
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('lampiran_bukti_key')->nullable();
             $table->string('status_tiket', 20);
             $table->dateTime('tanggal_lapor');
-            $table->string('admin_id', 16)->nullable();
+            $table->string('admin_id', 64)->nullable();
             $table->string('tanggapan_admin')->nullable();
             $table->dateTime('tanggal_tanggapan')->nullable();
 

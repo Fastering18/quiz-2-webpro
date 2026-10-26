@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('pengumuman_classroom', function (Blueprint $table) {
             $table->id('pengumuman_id');
-            $table->string('kelas_id', 12);
+            $table->string('kelas_id', 64);
             $table->string('konten', 2000)->nullable();
             $table->date('tanggal_unggah');
 
