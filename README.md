@@ -34,6 +34,7 @@ Web classroom ITS smol reverse engineered
 10. Mahasiswa/Dosen melaporkan bug  
 11. Admin membalas laporan bug  
 12. Pengguna(admin/dosen/mahasiswa) dapat menyunting profil  
+13. Admin manajemen website (/admin-panel)
 
 ---
 
