@@ -58,13 +58,13 @@
             <div id="view-forgot-password" class="view-section d-none">
                 <div class="header-text">
                     <h1>Lupa kata sandi?</h1>
-                    <p>Masukkan email yang terdaftar. Kami akan mengirim tautan untuk mengatur ulang kata sandi.</p>
+                    <p>Masukkan email atau nama pengguna Anda. Kami akan mengirim tautan untuk mengatur ulang kata sandi.</p>
                 </div>
                 <form id="forgotForm" class="login-form">
                     <div class="input-group">
-                        <label for="email">Alamat email</label>
+                        <label for="email">Email atau nama pengguna</label>
                         <div class="input-wrapper">
-                            <input type="email" id="email" placeholder="you@example.com" required>
+                            <input type="text" id="email" placeholder="you@example.com" required>
                         </div>
                     </div>
                     <button type="submit" class="btn-primary">Kirim tautan pemulihan</button>

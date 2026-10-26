@@ -31,3 +31,22 @@ services:
         value: database
       - key: QUEUE_CONNECTION
         value: database
+      # Forgot-password mail over plain SMTP. MAIL_MAILER=log (default) only logs the mail.
+      - key: MAIL_MAILER # unset = log; set to smtp together with the credentials below
+        sync: false
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_SCHEME
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        value: support@brahmanapriambudi.my.id
+      - key: MAIL_FROM_NAME
+        value: Portal Quiz 2 WebPro
+      - key: FRONTEND_URL
+        sync: false

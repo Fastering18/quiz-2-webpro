@@ -104,11 +104,30 @@ document.addEventListener("DOMContentLoaded", function() {
         viewForgot.classList.remove("d-none");
     });
 
-    // Form Lupa Password disubmit (Simulasi kirim email)
+    // Form Lupa Password -> POST /api/forgot-password
     document.getElementById("forgotForm").addEventListener("submit", function(e) {
         e.preventDefault();
-        viewForgot.classList.add("d-none");
-        viewCheckEmail.classList.remove("d-none");
+        const form = this;
+        const btn = form.querySelector("button[type='submit']");
+        const label = btn.innerText;
+        const value = document.getElementById("email").value.trim();
+        if (!value) return;
+        btn.disabled = true;
+        btn.innerText = "Mengirim...";
+        fetch("/api/forgot-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify(value.includes("@") ? { email: value } : { username: value })
+        }).then(async res => {
+            const data = await res.json().catch(() => ({}));
+            if (res.ok) {
+                viewForgot.classList.add("d-none");
+                viewCheckEmail.classList.remove("d-none");
+            } else {
+                alert(data.message || "Permintaan gagal. Coba lagi nanti.");
+            }
+        }).catch(() => alert("Tidak dapat terhubung ke server. Silakan coba lagi nanti."))
+          .finally(() => { btn.disabled = false; btn.innerText = label; });
     });
 
     // Klik tombol "Kembali ke halaman masuk"

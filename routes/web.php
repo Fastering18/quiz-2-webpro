@@ -15,6 +15,8 @@ Route::get('/', function () {
     return view('welcome');
 })->name('login');
 
+Route::get('/reset-password', fn () => view('reset-password'))->name('password.reset');
+
 Route::middleware('auth')->group(function () {
     Route::get('/portal', function () {
         return view('portal');

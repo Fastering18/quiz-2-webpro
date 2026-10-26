@@ -167,3 +167,24 @@ The S3 client uses `request_checksum_calculation=when_required` (override with `
 - Viewing a class (`GET /api/classrooms/{id}`) and a task now requires membership (enrolled student, teaching dosen, or admin); changing class content requires the teaching dosen or admin.
 - Tests use `Storage::fake('s3')`; run them on Postgres with `DB_CONNECTION=pgsql … php artisan test`.
 - Cleanup endpoints (remove the stored files too): `DELETE /api/materials/{id}`, `DELETE /api/tasks/{id}`, `DELETE /api/sections/{id}` (teaching dosen/admin) and `DELETE /api/submissions/{id}` (owner while ungraded, class dosen, admin).
+
+## Forgot password (SMTP)
+
+`POST /api/forgot-password` `{ "email": "…" }` (or `{ "username": "…" }`) always returns `200` with the same message
+(`"Jika akun terdaftar, instruksi pengaturan ulang kata sandi telah dikirim ke email yang terkait."`), whether or not the account exists.
+It is throttled to 5 requests/hour per email+IP (`429` after that).
+For an existing account a single-use token (stored hashed in `password_reset_tokens`, valid 60 minutes) is generated and an Indonesian HTML+plain-text mail is sent
+**synchronously over plain SMTP** (no mail API/SDK). Delivery failures are logged and never change the response.
+The mail contains a link `FRONTEND_URL/reset-password?token=…&email=…` (served by a small page in this app) and the raw token for API-only clients.
+
+`POST /api/reset-password` `{ "email", "token", "password", "password_confirmation" }` → `200` and all Sanctum tokens of the user are revoked;
+an invalid/expired/used token gives `422` (`errors.token`). Limited to 10 attempts/hour per email+IP.
+
+| Env | Value |
+| --- | --- |
+| `MAIL_MAILER` | `log` (default; the mail is written to the log) or `smtp` |
+| `MAIL_HOST`, `MAIL_PORT` | SMTP server and port (e.g. `587`) |
+| `MAIL_SCHEME` | empty/`smtp` = STARTTLS when offered, `smtps` = implicit TLS (port 465) |
+| `MAIL_USERNAME`, `MAIL_PASSWORD` | SMTP credentials (`sync: false` in `render.yaml`) |
+| `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | `support@brahmanapriambudi.my.id`, `Portal Quiz 2 WebPro` |
+| `FRONTEND_URL` | base URL of the web app for the reset link (defaults to `APP_URL`) |

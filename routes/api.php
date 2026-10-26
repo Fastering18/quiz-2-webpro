@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\FileController;
 use App\Http\Controllers\Api\KrsController;
 use App\Http\Controllers\Api\LaporanAdminController;
+use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\PerpustakaanController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\TugasController;
@@ -27,6 +28,9 @@ use Illuminate\Support\Facades\Route;
 
 // Public Authentication Route
 Route::post('/login', [AuthController::class, 'login'])->name('api.login');
+
+Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])->name('api.password.forgot');
+Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('api.password.reset');
 
 // Protected Routes (Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
