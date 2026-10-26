@@ -148,9 +148,10 @@ class AdminApiTest extends TestCase
             ->assertJsonPath('user.mahasiswa.nrp', $mhs->mahasiswa->nrp);
         $this->getJson('/api/admin/users/nope')->assertStatus(404);
 
-        $this->putJson('/api/admin/users/'.$mhs->user_id, ['nama_lengkap' => 'Nama Baru', 'semester_aktif' => 5])
+        $this->putJson('/api/admin/users/'.$mhs->user_id, ['nama_lengkap' => 'Nama Baru', 'semester_aktif' => 5, 'password' => 'passupdate123'])
             ->assertStatus(200)->assertJsonPath('user.nama_lengkap', 'Nama Baru')
             ->assertJsonPath('user.mahasiswa.semester_aktif', 5);
+        $this->postJson('/api/login', ['username' => $mhs->username, 'password' => 'passupdate123'])->assertStatus(200);
 
         $res = $this->patchJson('/api/admin/users/'.$mhs->user_id.'/password', ['password' => 'baru12345'])
             ->assertStatus(200);

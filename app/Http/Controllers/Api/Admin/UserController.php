@@ -141,6 +141,7 @@ class UserController extends Controller
             'username' => ['sometimes', 'string', 'min:3', 'max:30', 'regex:/^[A-Za-z0-9._-]+$/', Rule::unique('pengguna', 'username')->ignore($user->user_id, 'user_id')],
             'nama_lengkap' => ['sometimes', 'string', 'max:100'],
             'email' => ['sometimes', 'email', 'max:120', Rule::unique('pengguna', 'email')->ignore($user->user_id, 'user_id')],
+            'password' => ['nullable', 'string', 'min:8', 'max:72'],
             'nomor_telepon' => ['nullable', 'string', 'max:20'],
             'alamat_rumah' => ['nullable', 'string', 'max:255'],
 
@@ -151,9 +152,16 @@ class UserController extends Controller
         ]);
 
         DB::transaction(function () use ($user, $validated) {
-            $user->update(array_intersect_key($validated, array_flip([
+            $userUpdates = array_intersect_key($validated, array_flip([
                 'username', 'nama_lengkap', 'email', 'nomor_telepon', 'alamat_rumah',
-            ])));
+            ]));
+
+            if (! empty($validated['password'])) {
+                $userUpdates['password_hash'] = $validated['password'];
+                $user->tokens()->delete();
+            }
+
+            $user->update($userUpdates);
 
             if ($user->role === 'mahasiswa' && $user->mahasiswa) {
                 $user->mahasiswa->update(array_intersect_key($validated, array_flip([

@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     // Tab switcher
-    const tabButtons = document.querySelectorAll(".classroom-tab");
+    const tabButtons = document.querySelectorAll(".admin-tab, .classroom-tab");
     const panels = {
         users: document.getElementById("panelUsers"),
         mk: document.getElementById("panelMk"),
@@ -88,6 +88,32 @@ document.addEventListener("DOMContentLoaded", async function () {
         } catch (err) {
             console.error("Gagal memuat stats:", err);
         }
+    }
+
+    // Helper: Cached Dosen list
+    let cachedDosens = null;
+    async function getDosenList() {
+        if (!cachedDosens) {
+            try {
+                const res = await window.apiFetch("/api/admin/dosen");
+                cachedDosens = res?.dosen || [];
+            } catch (e) {
+                cachedDosens = [];
+            }
+        }
+        return cachedDosens;
+    }
+
+    // Helper: Cached Mata Kuliah list
+    let cachedMks = null;
+    async function getMkList() {
+        try {
+            const res = await window.apiFetch("/api/admin/mata-kuliah?per_page=100");
+            cachedMks = res?.data || [];
+        } catch (e) {
+            cachedMks = [];
+        }
+        return cachedMks;
     }
 
     // 2. KELOLA PENGGUNA (USERS)
@@ -139,10 +165,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <td>${window.escapeHtml(u.email)}</td>
                     <td style="text-align:right;">
                         <div class="action-btn-group" style="justify-content:flex-end;">
-                            <button class="btn-action-small btn-action-secondary btn-reset-pw" data-id="${u.user_id}" data-name="${window.escapeHtml(u.nama_lengkap)}">
-                                Reset PW
+                            <button class="btn-action-small btn-action-edit btn-edit-user" data-id="${u.user_id}">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                Edit
                             </button>
                             <button class="btn-action-small btn-action-danger btn-delete-user" data-id="${u.user_id}" data-name="${window.escapeHtml(u.nama_lengkap)}">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                                 Hapus
                             </button>
                         </div>
@@ -150,18 +178,68 @@ document.addEventListener("DOMContentLoaded", async function () {
                 </tr>`;
             }).join("");
 
-            // Wire action buttons
-            tbody.querySelectorAll(".btn-reset-pw").forEach(b => {
-                b.addEventListener("click", function () {
-                    document.getElementById("resetUserId").value = this.dataset.id;
-                    document.getElementById("resetUserName").textContent = this.dataset.name;
-                    document.getElementById("inputNewPassword").value = "admin";
-                    const fb = document.getElementById("feedbackReset");
+            // Wire Edit User
+            tbody.querySelectorAll(".btn-edit-user").forEach(b => {
+                b.addEventListener("click", async function () {
+                    const id = this.dataset.id;
+                    const fb = document.getElementById("feedbackEditUser");
                     if (fb) { fb.textContent = ""; fb.className = "classroom-feedback"; }
-                    openModal("modalResetPassword");
+
+                    try {
+                        const res = await window.apiFetch(`/api/admin/users/${id}`);
+                        const user = res?.user;
+                        if (!user) return;
+
+                        document.getElementById("editUserId").value = user.user_id;
+                        document.getElementById("editUserRole").value = user.role;
+                        document.getElementById("editUserRoleBadge").textContent = user.role.toUpperCase();
+                        document.getElementById("editUserRoleBadge").className = `status-badge ${user.role === 'mahasiswa' ? 'badge-success' : (user.role === 'dosen' ? 'badge-warning' : 'badge-danger')}`;
+
+                        document.getElementById("editUserUsername").value = user.username || "";
+                        document.getElementById("editUserEmail").value = user.email || "";
+                        document.getElementById("editUserNama").value = user.nama_lengkap || "";
+                        document.getElementById("editUserPhone").value = user.nomor_telepon || "";
+                        document.getElementById("editUserAddress").value = user.alamat_rumah || "";
+                        document.getElementById("editUserPassword").value = "";
+
+                        const mhsFields = document.getElementById("editFieldsMahasiswa");
+                        const dsnFields = document.getElementById("editFieldsDosen");
+
+                        if (user.role === "mahasiswa") {
+                            mhsFields.classList.remove("d-none");
+                            dsnFields.classList.add("d-none");
+                            const m = user.mahasiswa || {};
+                            document.getElementById("editMhsNrp").value = m.nrp || "";
+                            document.getElementById("editMhsDept").value = m.departemen || "Informatika";
+                            document.getElementById("editMhsSem").value = m.semester_aktif || 1;
+                            document.getElementById("editMhsStatus").value = m.status || "Aktif";
+
+                            // Populate Dosen Wali
+                            const dosens = await getDosenList();
+                            const sel = document.getElementById("editMhsWali");
+                            if (sel) {
+                                sel.innerHTML = dosens.map(d => `<option value="${d.nip}" ${d.nip === m.nip_wali ? 'selected' : ''}>${window.escapeHtml(d.user?.nama_lengkap || d.nip)}</option>`).join("");
+                            }
+                        } else if (user.role === "dosen") {
+                            mhsFields.classList.add("d-none");
+                            dsnFields.classList.remove("d-none");
+                            const d = user.dosen || {};
+                            document.getElementById("editDosenNip").value = d.nip || "";
+                            document.getElementById("editDosenDept").value = d.departemen || "Informatika";
+                            document.getElementById("editDosenStatus").value = d.status || "Aktif";
+                        } else {
+                            mhsFields.classList.add("d-none");
+                            dsnFields.classList.add("d-none");
+                        }
+
+                        openModal("modalEditUser");
+                    } catch (err) {
+                        alert("Gagal memuat detail pengguna: " + err.message);
+                    }
                 });
             });
 
+            // Wire Delete User
             tbody.querySelectorAll(".btn-delete-user").forEach(b => {
                 b.addEventListener("click", async function () {
                     const id = this.dataset.id;
@@ -206,10 +284,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (btnOpenAddUser) {
         btnOpenAddUser.addEventListener("click", async () => {
-            // Load dosen options for dosen wali select
             try {
-                const dRes = await window.apiFetch("/api/admin/dosen");
-                const dosens = dRes?.dosen || [];
+                const dosens = await getDosenList();
                 const sel = document.getElementById("inputMhsWali");
                 if (sel) {
                     sel.innerHTML = dosens.map(d => `<option value="${d.nip}">${window.escapeHtml(d.user?.nama_lengkap || d.nip)}</option>`).join("");
@@ -264,6 +340,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 formUser.reset();
                 closeModal("modalUser");
                 alert("Pengguna baru berhasil ditambahkan!");
+                cachedDosens = null;
                 loadStats();
                 loadUsers(1);
             } catch (err) {
@@ -277,32 +354,58 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // Form Reset Password Submit
-    const formReset = document.getElementById("formResetPassword");
-    if (formReset) {
-        formReset.addEventListener("submit", async function (e) {
+    // Form Edit User Submit
+    const formEditUser = document.getElementById("formEditUser");
+    if (formEditUser) {
+        formEditUser.addEventListener("submit", async function (e) {
             e.preventDefault();
-            const id = document.getElementById("resetUserId").value;
-            const pw = document.getElementById("inputNewPassword").value.trim();
-            const fb = document.getElementById("feedbackReset");
-            const btn = document.getElementById("btnSubmitReset");
+            const id = document.getElementById("editUserId").value;
+            const role = document.getElementById("editUserRole").value;
+            const fb = document.getElementById("feedbackEditUser");
+            const btn = document.getElementById("btnSubmitEditUser");
 
-            if (btn) { btn.disabled = true; btn.textContent = "Mereset..."; }
+            const payload = {
+                username: document.getElementById("editUserUsername").value.trim(),
+                nama_lengkap: document.getElementById("editUserNama").value.trim(),
+                email: document.getElementById("editUserEmail").value.trim(),
+                nomor_telepon: document.getElementById("editUserPhone").value.trim() || null,
+                alamat_rumah: document.getElementById("editUserAddress").value.trim() || null,
+            };
+
+            const newPw = document.getElementById("editUserPassword").value.trim();
+            if (newPw) {
+                payload.password = newPw;
+            }
+
+            if (role === "mahasiswa") {
+                payload.nip_wali = document.getElementById("editMhsWali").value;
+                payload.departemen = document.getElementById("editMhsDept").value.trim();
+                payload.semester_aktif = parseInt(document.getElementById("editMhsSem").value, 10) || 1;
+                payload.status = document.getElementById("editMhsStatus").value;
+            } else if (role === "dosen") {
+                payload.departemen = document.getElementById("editDosenDept").value.trim();
+                payload.status = document.getElementById("editDosenStatus").value;
+            }
+
+            if (btn) { btn.disabled = true; btn.textContent = "Menyimpan..."; }
 
             try {
-                await window.apiFetch(`/api/admin/users/${id}/password`, {
-                    method: "PATCH",
-                    body: JSON.stringify({ password: pw })
+                await window.apiFetch(`/api/admin/users/${id}`, {
+                    method: "PUT",
+                    body: JSON.stringify(payload)
                 });
-                closeModal("modalResetPassword");
-                alert("Password berhasil direset!");
+                closeModal("modalEditUser");
+                alert("Pengguna berhasil diperbarui!");
+                cachedDosens = null;
+                loadStats();
+                loadUsers(usersCurrentPage);
             } catch (err) {
                 if (fb) {
-                    fb.textContent = err.message || "Gagal mereset password.";
+                    fb.textContent = err.message || "Gagal memperbarui pengguna.";
                     fb.className = "classroom-feedback is-visible is-error";
                 }
             } finally {
-                if (btn) { btn.disabled = false; btn.textContent = "Reset Password"; }
+                if (btn) { btn.disabled = false; btn.textContent = "Simpan Perubahan"; }
             }
         });
     }
@@ -337,13 +440,45 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <td>Semester ${mk.semester}</td>
                     <td>${mk.classroom_count || 0} Kelas</td>
                     <td style="text-align:right;">
-                        <button class="btn-action-small btn-action-danger btn-delete-mk" data-kode="${window.escapeHtml(mk.kode_mk)}" data-name="${window.escapeHtml(mk.nama_mk)}">
-                            Hapus
-                        </button>
+                        <div class="action-btn-group" style="justify-content:flex-end;">
+                            <button class="btn-action-small btn-action-edit btn-edit-mk" data-kode="${window.escapeHtml(mk.kode_mk)}">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                Edit
+                            </button>
+                            <button class="btn-action-small btn-action-danger btn-delete-mk" data-kode="${window.escapeHtml(mk.kode_mk)}" data-name="${window.escapeHtml(mk.nama_mk)}">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                Hapus
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `).join("");
 
+            // Wire Edit MK
+            tbody.querySelectorAll(".btn-edit-mk").forEach(b => {
+                b.addEventListener("click", async function () {
+                    const kode = this.dataset.kode;
+                    const fb = document.getElementById("feedbackEditMk");
+                    if (fb) { fb.textContent = ""; fb.className = "classroom-feedback"; }
+
+                    try {
+                        const res = await window.apiFetch(`/api/admin/mata-kuliah/${encodeURIComponent(kode)}`);
+                        const mk = res?.mata_kuliah;
+                        if (!mk) return;
+
+                        document.getElementById("editMkKode").value = mk.kode_mk;
+                        document.getElementById("editMkNama").value = mk.nama_mk;
+                        document.getElementById("editMkSks").value = mk.sks;
+                        document.getElementById("editMkSemester").value = mk.semester;
+
+                        openModal("modalEditMk");
+                    } catch (err) {
+                        alert("Gagal memuat mata kuliah: " + err.message);
+                    }
+                });
+            });
+
+            // Wire Delete MK
             tbody.querySelectorAll(".btn-delete-mk").forEach(b => {
                 b.addEventListener("click", async function () {
                     const kode = this.dataset.kode;
@@ -353,6 +488,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     try {
                         await window.apiFetch(`/api/admin/mata-kuliah/${encodeURIComponent(kode)}`, { method: "DELETE" });
                         alert("Mata kuliah berhasil dihapus.");
+                        cachedMks = null;
                         loadStats();
                         loadMk(mkCurrentPage);
                     } catch (err) {
@@ -404,6 +540,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 formMk.reset();
                 closeModal("modalMk");
                 alert("Mata kuliah berhasil ditambahkan!");
+                cachedMks = null;
                 loadStats();
                 loadMk(1);
             } catch (err) {
@@ -413,6 +550,43 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             } finally {
                 if (btn) { btn.disabled = false; btn.textContent = "Simpan Mata Kuliah"; }
+            }
+        });
+    }
+
+    const formEditMk = document.getElementById("formEditMk");
+    if (formEditMk) {
+        formEditMk.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const kode = document.getElementById("editMkKode").value.trim();
+            const fb = document.getElementById("feedbackEditMk");
+            const btn = document.getElementById("btnSubmitEditMk");
+
+            const payload = {
+                nama_mk: document.getElementById("editMkNama").value.trim(),
+                sks: parseInt(document.getElementById("editMkSks").value, 10),
+                semester: parseInt(document.getElementById("editMkSemester").value, 10),
+            };
+
+            if (btn) { btn.disabled = true; btn.textContent = "Menyimpan..."; }
+
+            try {
+                await window.apiFetch(`/api/admin/mata-kuliah/${encodeURIComponent(kode)}`, {
+                    method: "PUT",
+                    body: JSON.stringify(payload)
+                });
+                closeModal("modalEditMk");
+                alert("Mata kuliah berhasil diperbarui!");
+                cachedMks = null;
+                loadStats();
+                loadMk(mkCurrentPage);
+            } catch (err) {
+                if (fb) {
+                    fb.textContent = err.message || "Gagal memperbarui mata kuliah.";
+                    fb.className = "classroom-feedback is-visible is-error";
+                }
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = "Simpan Perubahan"; }
             }
         });
     }
@@ -453,13 +627,59 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <td>${window.escapeHtml(c.semester_tahun)}</td>
                     <td><span class="status-badge ${enrolled >= c.kuota_kelas ? "badge-danger" : "badge-success"}">${enrolled} / ${c.kuota_kelas}</span></td>
                     <td style="text-align:right;">
-                        <button class="btn-action-small btn-action-danger btn-delete-kelas" data-id="${window.escapeHtml(c.kelas_id)}" data-name="${window.escapeHtml(c.nama_kelas)}">
-                            Hapus
-                        </button>
+                        <div class="action-btn-group" style="justify-content:flex-end;">
+                            <button class="btn-action-small btn-action-edit btn-edit-kelas" data-id="${window.escapeHtml(c.kelas_id)}">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                Edit
+                            </button>
+                            <button class="btn-action-small btn-action-danger btn-delete-kelas" data-id="${window.escapeHtml(c.kelas_id)}" data-name="${window.escapeHtml(c.nama_kelas)}">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                Hapus
+                            </button>
+                        </div>
                     </td>
                 </tr>`;
             }).join("");
 
+            // Wire Edit Kelas
+            tbody.querySelectorAll(".btn-edit-kelas").forEach(b => {
+                b.addEventListener("click", async function () {
+                    const id = this.dataset.id;
+                    const fb = document.getElementById("feedbackEditKelas");
+                    if (fb) { fb.textContent = ""; fb.className = "classroom-feedback"; }
+
+                    try {
+                        const [cRes, mks, dosens] = await Promise.all([
+                            window.apiFetch(`/api/admin/kelas/${encodeURIComponent(id)}`),
+                            getMkList(),
+                            getDosenList()
+                        ]);
+                        const cls = cRes?.classroom;
+                        if (!cls) return;
+
+                        document.getElementById("editKelasId").value = cls.kelas_id;
+                        document.getElementById("editKelasNama").value = cls.nama_kelas;
+                        document.getElementById("editKelasKuota").value = cls.kuota_kelas;
+                        document.getElementById("editKelasTahun").value = cls.semester_tahun;
+
+                        const selMk = document.getElementById("editSelectKelasMk");
+                        if (selMk) {
+                            selMk.innerHTML = mks.map(m => `<option value="${m.kode_mk}" ${m.kode_mk === cls.kode_mk ? 'selected' : ''}>${window.escapeHtml(m.nama_mk)} (${m.kode_mk}) - ${m.sks} SKS</option>`).join("");
+                        }
+
+                        const selDosen = document.getElementById("editSelectKelasDosen");
+                        if (selDosen) {
+                            selDosen.innerHTML = dosens.map(d => `<option value="${d.nip}" ${d.nip === cls.nip ? 'selected' : ''}>${window.escapeHtml(d.user?.nama_lengkap || d.nip)}</option>`).join("");
+                        }
+
+                        openModal("modalEditKelas");
+                    } catch (err) {
+                        alert("Gagal memuat kelas: " + err.message);
+                    }
+                });
+            });
+
+            // Wire Delete Kelas
             tbody.querySelectorAll(".btn-delete-kelas").forEach(b => {
                 b.addEventListener("click", async function () {
                     const id = this.dataset.id;
@@ -494,21 +714,20 @@ document.addEventListener("DOMContentLoaded", async function () {
     const btnOpenAddKelas = document.getElementById("btnOpenModalAddKelas");
     if (btnOpenAddKelas) {
         btnOpenAddKelas.addEventListener("click", async () => {
-            // Load MK & Dosen options
             try {
-                const [mkRes, dRes] = await Promise.all([
-                    window.apiFetch("/api/admin/mata-kuliah?per_page=100"),
-                    window.apiFetch("/api/admin/dosen")
+                const [mks, dosens] = await Promise.all([
+                    getMkList(),
+                    getDosenList()
                 ]);
 
                 const selMk = document.getElementById("selectKelasMk");
-                if (selMk && mkRes?.data) {
-                    selMk.innerHTML = mkRes.data.map(m => `<option value="${m.kode_mk}">${window.escapeHtml(m.nama_mk)} (${m.kode_mk}) - ${m.sks} SKS</option>`).join("");
+                if (selMk) {
+                    selMk.innerHTML = mks.map(m => `<option value="${m.kode_mk}">${window.escapeHtml(m.nama_mk)} (${m.kode_mk}) - ${m.sks} SKS</option>`).join("");
                 }
 
                 const selDosen = document.getElementById("selectKelasDosen");
-                if (selDosen && dRes?.dosen) {
-                    selDosen.innerHTML = dRes.dosen.map(d => `<option value="${d.nip}">${window.escapeHtml(d.user?.nama_lengkap || d.nip)}</option>`).join("");
+                if (selDosen) {
+                    selDosen.innerHTML = dosens.map(d => `<option value="${d.nip}">${window.escapeHtml(d.user?.nama_lengkap || d.nip)}</option>`).join("");
                 }
             } catch (e) {}
             openModal("modalKelas");
@@ -550,6 +769,44 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             } finally {
                 if (btn) { btn.disabled = false; btn.textContent = "Simpan Kelas"; }
+            }
+        });
+    }
+
+    const formEditKelas = document.getElementById("formEditKelas");
+    if (formEditKelas) {
+        formEditKelas.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const id = document.getElementById("editKelasId").value.trim();
+            const fb = document.getElementById("feedbackEditKelas");
+            const btn = document.getElementById("btnSubmitEditKelas");
+
+            const payload = {
+                kode_mk: document.getElementById("editSelectKelasMk").value,
+                nip: document.getElementById("editSelectKelasDosen").value,
+                nama_kelas: document.getElementById("editKelasNama").value.trim(),
+                semester_tahun: document.getElementById("editKelasTahun").value.trim(),
+                kuota_kelas: parseInt(document.getElementById("editKelasKuota").value, 10),
+            };
+
+            if (btn) { btn.disabled = true; btn.textContent = "Menyimpan..."; }
+
+            try {
+                await window.apiFetch(`/api/admin/kelas/${encodeURIComponent(id)}`, {
+                    method: "PUT",
+                    body: JSON.stringify(payload)
+                });
+                closeModal("modalEditKelas");
+                alert("Kelas perkuliahan berhasil diperbarui!");
+                loadStats();
+                loadKelas(kelasCurrentPage);
+            } catch (err) {
+                if (fb) {
+                    fb.textContent = err.message || "Gagal memperbarui kelas.";
+                    fb.className = "classroom-feedback is-visible is-error";
+                }
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = "Simpan Perubahan"; }
             }
         });
     }

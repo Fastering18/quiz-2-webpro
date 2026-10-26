@@ -107,6 +107,7 @@ class MyTopbar extends HTMLElement {
                     data.user._cachedAt = Date.now();
                     localStorage.setItem('user', JSON.stringify(data.user));
                     applyUser(data.user);
+                    window.dispatchEvent(new CustomEvent('auth:user-updated', { detail: data.user }));
                 }
             })
             .catch(() => {});
@@ -166,15 +167,32 @@ customElements.define('my-topbar', MyTopbar);
 
 class MySidebar extends HTMLElement {
     connectedCallback() {
+        this.render();
+        this._onAuthUpdate = () => this.render();
+        window.addEventListener('auth:user-updated', this._onAuthUpdate);
+    }
+
+    disconnectedCallback() {
+        if (this._onAuthUpdate) {
+            window.removeEventListener('auth:user-updated', this._onAuthUpdate);
+        }
+    }
+
+    render() {
         const activePage = this.getAttribute('active') || '';
         let isDosen = false;
         let isAdmin = false;
+
+        const metaRole = document.querySelector('meta[name="user-role"]')?.content;
+        if (metaRole === 'admin') isAdmin = true;
+        if (metaRole === 'dosen') isDosen = true;
+
         try {
             const raw = localStorage.getItem('user');
             if (raw) {
                 const u = JSON.parse(raw);
-                isDosen = u.role === 'dosen';
-                isAdmin = u.role === 'admin';
+                if (u.role === 'dosen') isDosen = true;
+                if (u.role === 'admin') isAdmin = true;
             }
         } catch (e) {}
 
@@ -183,13 +201,17 @@ class MySidebar extends HTMLElement {
             { id: 'classroom', name: 'Classroom',                  url: '/classroom',   icon: 'Books.svg' },
             { id: 'library',   name: 'Perpustakaan',               url: '/library',     icon: 'Literature.svg' },
             { id: 'krs',       name: isDosen ? 'Perwalian' : 'Kartu Rencana Studi', url: '/krs', icon: 'Page.svg' },
-            { id: 'admin',     name: 'Lapor Admin',                url: '/lapor-admin', icon: 'Speech Bubble.svg' },
-            { id: 'profile',   name: 'Profil',                     url: '/profile',     icon: 'User.svg' },
         ];
 
+        // Admin Panel: strictly visible for admin role only, positioned right above Lapor Admin
         if (isAdmin) {
             menuItems.push({ id: 'admin-panel', name: 'Admin Panel', url: '/admin-panel', icon: 'Admin.svg' });
         }
+
+        menuItems.push(
+            { id: 'admin',     name: 'Lapor Admin',                url: '/lapor-admin', icon: 'Speech Bubble.svg' },
+            { id: 'profile',   name: 'Profil',                     url: '/profile',     icon: 'User.svg' },
+        );
 
         const navHtml = menuItems.map(function (item) {
             const isActive = activePage === item.id ? 'active' : '';
