@@ -30,6 +30,8 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    protected $appends = ['foto_url'];
+
     protected $fillable = [
         'user_id',
         'username',
@@ -94,5 +96,10 @@ class User extends Authenticatable
     public function laporanDitangani(): HasMany
     {
         return $this->hasMany(LaporanAdmin::class, 'admin_id', 'user_id');
+    }
+
+    public function getFotoUrlAttribute(): ?string
+    {
+        return app(\App\Services\FileStorage::class)->temporaryUrl($this->foto_profil_key);
     }
 }

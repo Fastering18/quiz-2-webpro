@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Rules\LegacyFileKey;
+use App\Services\FileStorage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -27,15 +29,15 @@ class ProfileController extends Controller
     /**
      * Update user contact info and photo.
      */
-    public function update(Request $request): JsonResponse
+    public function update(Request $request, FileStorage $files): JsonResponse
     {
         $user = $request->user();
 
         $validated = $request->validate([
             'nomor_telepon' => ['nullable', 'string', 'max:20'],
             'alamat_rumah' => ['nullable', 'string', 'max:255'],
-            'foto' => ['nullable', 'image', 'max:4096'],
-            'foto_profil_key' => ['nullable', 'string'],
+            'foto' => ['nullable', ...$files->rules('avatars')],
+            'foto_profil_key' => ['nullable', 'string', new LegacyFileKey],
         ]);
 
         $dataToUpdate = [
@@ -44,13 +46,17 @@ class ProfileController extends Controller
         ];
 
         if ($request->hasFile('foto')) {
-            $path = $request->file('foto')->store('avatars', 'public');
-            $dataToUpdate['foto_profil_key'] = $path;
+            $dataToUpdate['foto_profil_key'] = $files->store($request->file('foto'), 'avatars/'.$user->user_id);
         } elseif (isset($validated['foto_profil_key'])) {
             $dataToUpdate['foto_profil_key'] = $validated['foto_profil_key'];
         }
 
+        $oldKey = $user->foto_profil_key;
         $user->update($dataToUpdate);
+
+        if (isset($dataToUpdate['foto_profil_key']) && $dataToUpdate['foto_profil_key'] !== $oldKey) {
+            $files->delete($oldKey);
+        }
 
         return response()->json([
             'message' => 'Profil berhasil diperbarui.',

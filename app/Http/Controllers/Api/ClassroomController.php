@@ -8,6 +8,8 @@ use App\Models\Classroom;
 use App\Models\MateriKelas;
 use App\Models\PengumumanClassroom;
 use App\Models\TugasKelas;
+use App\Rules\LegacyFileKey;
+use App\Services\FileStorage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -91,6 +93,10 @@ class ClassroomController extends Controller
 
         $classroom = $query->findOrFail($kelasId);
 
+        if (! FileController::canAccessClass($user, $classroom->kelas_id)) {
+            return response()->json(['message' => 'Akses ditolak.'], 403);
+        }
+
         return response()->json([
             'classroom' => $classroom,
         ]);
@@ -102,6 +108,7 @@ class ClassroomController extends Controller
     public function storeAnnouncement(Request $request, string $kelasId): JsonResponse
     {
         $classroom = Classroom::findOrFail($kelasId);
+        $this->authorizeTeaching($request, $classroom->kelas_id);
 
         $validated = $request->validate([
             'konten' => ['required', 'string', 'max:2000'],
@@ -125,6 +132,7 @@ class ClassroomController extends Controller
     public function storeSection(Request $request, string $kelasId): JsonResponse
     {
         $classroom = Classroom::findOrFail($kelasId);
+        $this->authorizeTeaching($request, $classroom->kelas_id);
 
         $validated = $request->validate([
             'judul_bagian' => ['required', 'string', 'max:160'],
@@ -152,27 +160,29 @@ class ClassroomController extends Controller
     /**
      * Upload/attach material to a section.
      */
-    public function storeMaterial(Request $request, string|int $bagianId): JsonResponse
+    public function storeMaterial(Request $request, string|int $bagianId, FileStorage $files): JsonResponse
     {
         $section = BagianKelas::findOrFail($bagianId);
+        $this->authorizeTeaching($request, $section->kelas_id);
 
         $validated = $request->validate([
             'judul_materi' => ['required', 'string', 'max:160'],
-            'file' => ['nullable', 'file', 'max:51200'], // max 50MB
-            'nama_file' => ['nullable', 'string'],
-            'file_materi_key' => ['nullable', 'string'],
+            'file' => ['required_without:file_materi_key', ...$files->rules('materials')],
+            // legacy fields (prefer sending a real "file")
+            'nama_file' => ['nullable', 'string', 'max:255'],
+            'file_materi_key' => ['nullable', 'string', new LegacyFileKey],
             'ukuran_file' => ['nullable', 'integer'],
         ]);
-
-        $namaFile = $validated['nama_file'] ?? 'document.pdf';
-        $fileKey = $validated['file_materi_key'] ?? 'materials/'.Str::random(20).'.pdf';
-        $ukuranFile = (int) ($validated['ukuran_file'] ?? 1024000);
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
             $namaFile = $file->getClientOriginalName();
-            $fileKey = $file->store('materials', 'public');
             $ukuranFile = $file->getSize();
+            $fileKey = $files->store($file, 'materials/'.$section->kelas_id);
+        } else {
+            $namaFile = $validated['nama_file'] ?? 'document.pdf';
+            $fileKey = $validated['file_materi_key'] ?? 'materials/'.Str::random(20).'.pdf';
+            $ukuranFile = (int) ($validated['ukuran_file'] ?? 1024000);
         }
 
         $material = MateriKelas::create([
@@ -190,12 +200,25 @@ class ClassroomController extends Controller
         ], 201);
     }
 
+    /** Only the class's lecturer or an admin may modify class content. */
+    private function authorizeTeaching(Request $request, string $kelasId): void
+    {
+        $user = $request->user();
+        $classroom = Classroom::find($kelasId);
+
+        $ok = $user->role === 'admin'
+            || ($user->role === 'dosen' && $user->dosen && $classroom?->nip === $user->dosen->nip);
+
+        abort_unless($ok, 403, 'Hanya dosen pengampu atau admin yang dapat mengubah kelas ini.');
+    }
+
     /**
      * Create a task/assignment inside a section.
      */
     public function storeTask(Request $request, string|int $bagianId): JsonResponse
     {
         $section = BagianKelas::findOrFail($bagianId);
+        $this->authorizeTeaching($request, $section->kelas_id);
 
         $validated = $request->validate([
             'judul_tugas' => ['required', 'string', 'max:160'],

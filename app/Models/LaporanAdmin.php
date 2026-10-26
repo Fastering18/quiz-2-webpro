@@ -20,6 +20,8 @@ class LaporanAdmin extends Model
 
     public $timestamps = false;
 
+    protected $appends = ['file_url'];
+
     protected $fillable = [
         'tiket_id',
         'user_id',
@@ -54,5 +56,10 @@ class LaporanAdmin extends Model
     public function admin(): BelongsTo
     {
         return $this->belongsTo(User::class, 'admin_id', 'user_id');
+    }
+
+    public function getFileUrlAttribute(): ?string
+    {
+        return app(\App\Services\FileStorage::class)->temporaryUrl($this->lampiran_bukti_key, $this->lampiran_nama_file);
     }
 }

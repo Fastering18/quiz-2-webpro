@@ -16,6 +16,8 @@ class PengumpulanTugas extends Model
 
     public $timestamps = false;
 
+    protected $appends = ['file_url'];
+
     protected $fillable = [
         'tugas_id',
         'nrp',
@@ -25,6 +27,7 @@ class PengumpulanTugas extends Model
         'komentar',
         'tanggal_kirim',
         'nilai_tugas',
+        'terlambat',
     ];
 
     /**
@@ -36,6 +39,7 @@ class PengumpulanTugas extends Model
             'tanggal_kirim' => 'datetime',
             'ukuran_file' => 'integer',
             'nilai_tugas' => 'integer',
+            'terlambat' => 'boolean',
         ];
     }
 
@@ -47,5 +51,10 @@ class PengumpulanTugas extends Model
     public function mahasiswa(): BelongsTo
     {
         return $this->belongsTo(Mahasiswa::class, 'nrp', 'nrp');
+    }
+
+    public function getFileUrlAttribute(): ?string
+    {
+        return app(\App\Services\FileStorage::class)->temporaryUrl($this->file_jawaban_key, $this->nama_file);
     }
 }

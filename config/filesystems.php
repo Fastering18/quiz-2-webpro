@@ -56,6 +56,9 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            // Non-AWS S3 providers (e.g. Neon) reject the SDK's default CRC checksums
+            'request_checksum_calculation' => env('AWS_REQUEST_CHECKSUM_CALCULATION', 'when_required'),
+            'response_checksum_validation' => env('AWS_RESPONSE_CHECKSUM_VALIDATION', 'when_required'),
             'throw' => false,
             'report' => false,
         ],

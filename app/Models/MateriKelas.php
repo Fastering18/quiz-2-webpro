@@ -16,6 +16,8 @@ class MateriKelas extends Model
 
     public $timestamps = false;
 
+    protected $appends = ['file_url'];
+
     protected $fillable = [
         'bagian_id',
         'judul_materi',
@@ -39,5 +41,10 @@ class MateriKelas extends Model
     public function bagianKelas(): BelongsTo
     {
         return $this->belongsTo(BagianKelas::class, 'bagian_id', 'bagian_id');
+    }
+
+    public function getFileUrlAttribute(): ?string
+    {
+        return app(\App\Services\FileStorage::class)->temporaryUrl($this->file_materi_key, $this->nama_file);
     }
 }

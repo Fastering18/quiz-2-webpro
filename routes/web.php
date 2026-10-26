@@ -3,6 +3,10 @@
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/files/local', [\App\Http\Controllers\Api\FileController::class, 'local'])
+    ->middleware('signed')
+    ->name('files.local');
+
 Route::get('/', function () {
     if (Auth::check()) {
         return redirect()->route('portal');

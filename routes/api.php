@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClassroomController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\FileController;
 use App\Http\Controllers\Api\KrsController;
 use App\Http\Controllers\Api\LaporanAdminController;
 use App\Http\Controllers\Api\PerpustakaanController;
@@ -67,9 +68,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reports', [LaporanAdminController::class, 'store'])->name('api.reports.store');
     Route::patch('/reports/{id}/reply', [LaporanAdminController::class, 'reply'])->name('api.reports.reply');
 
+    // Authorized file downloads (presigned URL redirect / JSON)
+    Route::get('/files/{kind}/{id}', [FileController::class, 'show'])->name('api.files.show');
+
     // User Profile & Settings
     Route::get('/profile', [ProfileController::class, 'show'])->name('api.profile.show');
     Route::put('/profile', [ProfileController::class, 'update'])->name('api.profile.update');
+    Route::post('/profile', [ProfileController::class, 'update'])->name('api.profile.update.multipart'); // multipart (PHP can't parse PUT bodies)
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('api.profile.password');
 
     // Admin module (role: admin)
@@ -113,6 +118,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/library', [AdminPerpustakaanController::class, 'index'])->name('library.index');
         Route::put('/library/{bukuId}', [AdminPerpustakaanController::class, 'update'])->name('library.update');
+        Route::post('/library/{bukuId}', [AdminPerpustakaanController::class, 'update'])->name('library.update.multipart');
         Route::delete('/library/{bukuId}', [AdminPerpustakaanController::class, 'destroy'])->name('library.destroy');
     });
 });

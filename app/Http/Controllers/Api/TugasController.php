@@ -7,7 +7,8 @@ use App\Models\PengumpulanTugas;
 use App\Models\TugasKelas;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use App\Rules\LegacyFileKey;
+use App\Services\FileStorage;
 
 class TugasController extends Controller
 {
@@ -19,6 +20,10 @@ class TugasController extends Controller
         $user = $request->user();
         $task = TugasKelas::with(['bagianKelas.classroom.mataKuliah', 'bagianKelas.classroom.dosen.user'])
             ->findOrFail($tugasId);
+
+        if (! FileController::canAccessClass($user, (string) $task->bagianKelas?->kelas_id)) {
+            return response()->json(['message' => 'Akses ditolak.'], 403);
+        }
 
         $mySubmission = null;
         $allSubmissions = null;
@@ -44,7 +49,7 @@ class TugasController extends Controller
     /**
      * Submit or re-submit an assignment for the task.
      */
-    public function submit(Request $request, string|int $tugasId): JsonResponse
+    public function submit(Request $request, string|int $tugasId, FileStorage $files): JsonResponse
     {
         $user = $request->user();
 
@@ -61,28 +66,46 @@ class TugasController extends Controller
             ], 404);
         }
 
-        $task = TugasKelas::findOrFail($tugasId);
+        $task = TugasKelas::with('bagianKelas')->findOrFail($tugasId);
+
+        if (! FileController::canAccessClass($user, (string) $task->bagianKelas?->kelas_id)) {
+            return response()->json([
+                'message' => 'Anda tidak terdaftar di kelas untuk tugas ini.',
+            ], 403);
+        }
+
+        $formats = collect(explode(',', (string) $task->format_file))
+            ->map(fn ($f) => strtolower(trim($f)))->filter()->values()->all();
 
         $validated = $request->validate([
-            'file' => ['nullable', 'file', 'max:51200'],
-            'nama_file' => ['nullable', 'string'],
-            'file_jawaban_key' => ['nullable', 'string'],
+            'file' => ['required_without:file_jawaban_key', ...$files->rules('submissions', $formats)],
+            // legacy fields (prefer sending a real "file")
+            'nama_file' => ['nullable', 'string', 'max:255'],
+            'file_jawaban_key' => ['nullable', 'string', new LegacyFileKey],
             'ukuran_file' => ['nullable', 'integer'],
             'komentar' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $namaFile = $validated['nama_file'] ?? 'tugas_'.$mahasiswa->nrp.'.zip';
-        $fileKey = $validated['file_jawaban_key'] ?? 'submissions/'.Str::random(20).'.zip';
-        $ukuranFile = (int) ($validated['ukuran_file'] ?? 1024000);
+        $existing = PengumpulanTugas::where('tugas_id', $task->tugas_id)->where('nrp', $mahasiswa->nrp)->first();
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
             $namaFile = $file->getClientOriginalName();
-            $fileKey = $file->store('submissions', 'public');
             $ukuranFile = $file->getSize();
+            $fileKey = $files->store($file, 'submissions/'.$task->tugas_id.'/'.$mahasiswa->nrp);
+        } else {
+            $namaFile = $validated['nama_file'] ?? 'tugas_'.$mahasiswa->nrp.'.zip';
+            $fileKey = $validated['file_jawaban_key'];
+            $ukuranFile = (int) ($validated['ukuran_file'] ?? 0);
         }
 
-        // Upsert submission
+        $now = now();
+        // a date-only deadline (00:00:00) means "until the end of that day"
+        $deadline = $task->tenggat_waktu;
+        if ($deadline && $deadline->format('H:i:s') === '00:00:00') {
+            $deadline = $deadline->copy()->endOfDay();
+        }
+
         $submission = PengumpulanTugas::updateOrCreate(
             [
                 'tugas_id' => $task->tugas_id,
@@ -93,9 +116,15 @@ class TugasController extends Controller
                 'file_jawaban_key' => $fileKey,
                 'ukuran_file' => $ukuranFile,
                 'komentar' => $validated['komentar'] ?? null,
-                'tanggal_kirim' => now(),
+                'tanggal_kirim' => $now,
+                'terlambat' => $deadline !== null && $now->gt($deadline),
             ]
         );
+
+        // replacing a submission removes the previous object
+        if ($existing && $existing->file_jawaban_key !== $fileKey) {
+            $files->delete($existing->file_jawaban_key);
+        }
 
         return response()->json([
             'message' => 'Tugas berhasil dikumpulkan.',

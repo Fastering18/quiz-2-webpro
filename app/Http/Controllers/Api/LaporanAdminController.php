@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\LaporanAdmin;
+use App\Rules\LegacyFileKey;
+use App\Services\FileStorage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -63,7 +65,7 @@ class LaporanAdminController extends Controller
     /**
      * Submit a new support ticket / complaint.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, FileStorage $files): JsonResponse
     {
         $user = $request->user();
 
@@ -71,9 +73,10 @@ class LaporanAdminController extends Controller
             'kategori_modul' => ['required', 'string', 'max:40'],
             'judul_laporan' => ['required', 'string', 'max:150'],
             'deskripsi_kendala' => ['required', 'string', 'max:2000'],
-            'lampiran' => ['nullable', 'file', 'max:10240'], // max 10MB
-            'lampiran_nama_file' => ['nullable', 'string'],
-            'lampiran_bukti_key' => ['nullable', 'string'],
+            'lampiran' => ['nullable', ...$files->rules('reports')],
+            // legacy fields (prefer sending a real "lampiran" file)
+            'lampiran_nama_file' => ['nullable', 'string', 'max:255'],
+            'lampiran_bukti_key' => ['nullable', 'string', new LegacyFileKey],
         ]);
 
         $tiketId = 'TKT_'.now()->format('Ymd').'_'.strtoupper(Str::random(4));
@@ -84,7 +87,7 @@ class LaporanAdminController extends Controller
         if ($request->hasFile('lampiran')) {
             $file = $request->file('lampiran');
             $namaFile = $file->getClientOriginalName();
-            $fileKey = $file->store('reports', 'public');
+            $fileKey = $files->store($file, 'reports/'.$tiketId);
         }
 
         $report = LaporanAdmin::create([

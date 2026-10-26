@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Perpustakaan;
+use App\Services\FileStorage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -33,7 +34,11 @@ class PerpustakaanController extends Controller
         );
     }
 
-    public function update(Request $request, string $bukuId): JsonResponse
+    /**
+     * Update metadata and/or replace the document. To replace the file send multipart/form-data
+     * with POST (or POST + _method=PUT), since PHP does not parse multipart PUT bodies.
+     */
+    public function update(Request $request, string $bukuId, FileStorage $files): JsonResponse
     {
         $book = Perpustakaan::findOrFail($bukuId);
 
@@ -42,9 +47,24 @@ class PerpustakaanController extends Controller
             'penulis' => ['sometimes', 'string', 'max:160'],
             'tahun' => ['nullable', 'integer', 'min:1900', 'max:'.(date('Y') + 1)],
             'kategori' => ['sometimes', 'string', 'max:40'],
+            'file' => ['nullable', ...$files->rules('library')],
         ]);
 
+        $oldKey = $book->file_dokumen_key;
+        unset($validated['file']);
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $validated['nama_file'] = $file->getClientOriginalName();
+            $validated['ukuran_file'] = $file->getSize();
+            $validated['file_dokumen_key'] = $files->store($file, 'library/'.$book->buku_id);
+        }
+
         $book->update($validated);
+
+        if (isset($validated['file_dokumen_key']) && $validated['file_dokumen_key'] !== $oldKey) {
+            $files->delete($oldKey);
+        }
 
         return response()->json([
             'message' => 'Data buku berhasil diperbarui.',
@@ -52,9 +72,12 @@ class PerpustakaanController extends Controller
         ]);
     }
 
-    public function destroy(string $bukuId): JsonResponse
+    public function destroy(string $bukuId, FileStorage $files): JsonResponse
     {
-        Perpustakaan::findOrFail($bukuId)->delete();
+        $book = Perpustakaan::findOrFail($bukuId);
+        $key = $book->file_dokumen_key;
+        $book->delete();
+        $files->delete($key);
 
         return response()->json([
             'message' => 'Buku berhasil dihapus dari perpustakaan.',

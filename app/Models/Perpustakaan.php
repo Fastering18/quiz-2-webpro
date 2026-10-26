@@ -20,6 +20,8 @@ class Perpustakaan extends Model
 
     public $timestamps = false;
 
+    protected $appends = ['file_url'];
+
     protected $fillable = [
         'buku_id',
         'judul_buku',
@@ -46,5 +48,10 @@ class Perpustakaan extends Model
     public function publisher(): BelongsTo
     {
         return $this->belongsTo(User::class, 'publisher_id', 'user_id');
+    }
+
+    public function getFileUrlAttribute(): ?string
+    {
+        return app(\App\Services\FileStorage::class)->temporaryUrl($this->file_dokumen_key, $this->nama_file);
     }
 }

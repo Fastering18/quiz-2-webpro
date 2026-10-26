@@ -142,3 +142,27 @@ Safety rules: an admin cannot delete their own account (`403`); deleting a user,
 ```json
 { "message": "Dosen tidak dapat dihapus karena masih menjadi dosen wali mahasiswa. Pindahkan perwalian terlebih dahulu." }
 ```
+
+## File uploads
+
+Uploads are stored in the private S3-compatible bucket (Neon object storage) through `App\Services\FileStorage`.
+When `AWS_BUCKET`/`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` are not set (local dev, tests) it falls back to the private `local` disk automatically.
+Env: `FILESYSTEM_DISK=s3`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`, `AWS_BUCKET`, `AWS_ENDPOINT`, `AWS_USE_PATH_STYLE_ENDPOINT=true`.
+The S3 client uses `request_checksum_calculation=when_required` (override with `AWS_REQUEST_CHECKSUM_CALCULATION`) because non-AWS providers reject the SDK's default checksums.
+
+| Kind | Endpoint (multipart/form-data) | Field | Object key | Max | Types |
+| --- | --- | --- | --- | --- | --- |
+| Material | `POST /api/sections/{id}/materials` (dosen of the class / admin) | `file` | `materials/{kelas}/…` | 10 MB | pdf, doc(x), ppt(x), xls(x), txt, md, zip, rar, 7z, png, jpg, mp4, c, cpp, java, py |
+| Submission | `POST /api/tasks/{id}/submit` (mahasiswa in the class) | `file` | `submissions/{tugas}/{nrp}/…` | 10 MB | pdf, doc(x), ppt(x), xls(x), txt, md, zip, rar, 7z, png, jpg, c, cpp, java, py, sql — further limited to the task's `format_file` |
+| Library | `POST /api/library` (dosen/admin); `POST /api/admin/library/{id}` replaces the file | `file` | `library/{buku_id}/…` | 10 MB | pdf, epub, doc(x), ppt(x), txt, zip |
+| Report | `POST /api/reports` | `lampiran` | `reports/{tiket}/…` | 5 MB | pdf, png, jpg, txt, zip, doc(x) |
+| Avatar | `POST /api/profile` (or `PUT` without a file) | `foto` | `avatars/{user_id}/…` | 2 MB | png, jpg, webp |
+
+- The old string fields (`file_materi_key`, `file_jawaban_key`, `file_dokumen_key`, `lampiran_bukti_key`, `foto_profil_key`) still work, but a real file is preferred and a legacy key may not point into the structured folders above.
+- PHP does not parse multipart `PUT` bodies, so send multipart as `POST` (a `POST /api/profile` alias exists; for admin library use `POST` or `POST` + `_method=PUT`).
+- Replacing a submission, library document or avatar deletes the previous object; deleting a library item deletes its file. A submission past the task deadline is accepted with `terlambat: true` (a date-only deadline counts until the end of that day).
+- JSON for materials, submissions, library items, reports and users includes `file_url` / `foto_url`: a presigned URL valid for 10 minutes (on the local fallback, a signed `/files/local` URL).
+- `GET /api/files/{kind}/{id}` (`materials|submissions|library|reports|avatars`) re-checks access and returns `302` to a fresh presigned URL, or JSON `{url, nama_file, expires_at}` with `Accept: application/json`.
+  Access: materials — students enrolled in the class, the class's dosen, admin; submissions — the owning student, the class's dosen, admin; reports — owner and admin; library and avatars — any authenticated user.
+- Viewing a class (`GET /api/classrooms/{id}`) and a task now requires membership (enrolled student, teaching dosen, or admin); changing class content requires the teaching dosen or admin.
+- Tests use `Storage::fake('s3')`; run them on Postgres with `DB_CONNECTION=pgsql … php artisan test`.

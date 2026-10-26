@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Perpustakaan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Rules\LegacyFileKey;
+use App\Services\FileStorage;
 use Illuminate\Support\Str;
 
 class PerpustakaanController extends Controller
@@ -57,7 +59,7 @@ class PerpustakaanController extends Controller
     /**
      * Store a new book / document into the library.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, FileStorage $files): JsonResponse
     {
         $user = $request->user();
 
@@ -72,23 +74,24 @@ class PerpustakaanController extends Controller
             'penulis' => ['required', 'string', 'max:160'],
             'tahun' => ['nullable', 'integer', 'min:1900', 'max:'.(date('Y') + 1)],
             'kategori' => ['required', 'string', 'max:40'],
-            'file' => ['nullable', 'file', 'max:102400'], // max 100MB
-            'nama_file' => ['nullable', 'string'],
-            'file_dokumen_key' => ['nullable', 'string'],
+            'file' => ['required_without:file_dokumen_key', ...$files->rules('library')],
+            // legacy fields (prefer sending a real "file")
+            'nama_file' => ['nullable', 'string', 'max:255'],
+            'file_dokumen_key' => ['nullable', 'string', new LegacyFileKey],
             'ukuran_file' => ['nullable', 'integer'],
         ]);
 
         $bukuId = 'BK_'.strtoupper(Str::random(6));
 
-        $namaFile = $validated['nama_file'] ?? 'book.pdf';
-        $fileKey = $validated['file_dokumen_key'] ?? 'library/'.Str::random(20).'.pdf';
-        $ukuranFile = (int) ($validated['ukuran_file'] ?? 5242880);
-
         if ($request->hasFile('file')) {
             $file = $request->file('file');
             $namaFile = $file->getClientOriginalName();
-            $fileKey = $file->store('library', 'public');
             $ukuranFile = $file->getSize();
+            $fileKey = $files->store($file, 'library/'.$bukuId);
+        } else {
+            $namaFile = $validated['nama_file'] ?? 'book.pdf';
+            $fileKey = $validated['file_dokumen_key'];
+            $ukuranFile = (int) ($validated['ukuran_file'] ?? 0);
         }
 
         $book = Perpustakaan::create([
@@ -112,7 +115,7 @@ class PerpustakaanController extends Controller
     /**
      * Remove the specified book from the library.
      */
-    public function destroy(Request $request, string $bukuId): JsonResponse
+    public function destroy(Request $request, string $bukuId, FileStorage $files): JsonResponse
     {
         $user = $request->user();
 
@@ -123,7 +126,9 @@ class PerpustakaanController extends Controller
         }
 
         $book = Perpustakaan::findOrFail($bukuId);
+        $key = $book->file_dokumen_key;
         $book->delete();
+        $files->delete($key);
 
         return response()->json([
             'message' => 'Buku berhasil dihapus dari perpustakaan.',
