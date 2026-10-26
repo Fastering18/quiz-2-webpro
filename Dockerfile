@@ -12,7 +12,7 @@ FROM php:8.4-apache
 RUN apt-get update \
  && apt-get install -y --no-install-recommends libpq-dev libsqlite3-dev libzip-dev libonig-dev unzip \
  && docker-php-ext-install pdo_pgsql pdo_sqlite zip mbstring bcmath opcache \
- && a2enmod rewrite headers \
+ && a2enmod rewrite headers deflate \
  && rm -rf /var/lib/apt/lists/*
 
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public \
@@ -23,7 +23,7 @@ RUN sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-avail
  && sed -ri 's!<VirtualHost \*:80>!<VirtualHost *:${PORT}>!' /etc/apache2/sites-available/000-default.conf \
  && echo 'ServerName localhost' > /etc/apache2/conf-available/servername.conf \
  && a2enconf servername \
- && printf 'opcache.enable=1\nopcache.validate_timestamps=0\nopcache.memory_consumption=128\n' > /usr/local/etc/php/conf.d/opcache.ini \
+ && printf 'opcache.enable=1\nopcache.enable_cli=0\nopcache.validate_timestamps=0\nopcache.memory_consumption=128\nopcache.interned_strings_buffer=16\nopcache.max_accelerated_files=10000\n' > /usr/local/etc/php/conf.d/opcache.ini \
  && printf 'upload_max_filesize=12M\npost_max_size=14M\nmemory_limit=256M\n' > /usr/local/etc/php/conf.d/uploads.ini
 
 WORKDIR /var/www/html

@@ -28,9 +28,9 @@ services:
       - key: SESSION_DRIVER
         value: database
       - key: CACHE_STORE
-        value: database
+        value: file
       - key: QUEUE_CONNECTION
-        value: database
+        value: sync
       # Forgot-password mail over plain SMTP. MAIL_MAILER=log (default) only logs the mail.
       - key: MAIL_MAILER # unset = log; set to smtp together with the credentials below
         sync: false

@@ -90,23 +90,27 @@ class MyTopbar extends HTMLElement {
             }
         };
 
-        // Only fetch /api/me if not cached in session or if stale
-        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || "";
-        fetch('/api/me', {
-            credentials: 'same-origin',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.user) {
-                localStorage.setItem('user', JSON.stringify(data.user));
-                applyUser(data.user);
-            }
-        })
-        .catch(() => {});
+        // Only fetch /api/me if not cached or cache is older than 5 minutes
+        const cachedAge = cached?._cachedAt ? (Date.now() - cached._cachedAt) : Infinity;
+        if (!cached || cachedAge > 300000) {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.content || "";
+            fetch('/api/me', {
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.user) {
+                    data.user._cachedAt = Date.now();
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    applyUser(data.user);
+                }
+            })
+            .catch(() => {});
+        }
 
         // Hamburger & Dropdown menu toggle
         const menuTrigger = this.querySelector('#menuTrigger');

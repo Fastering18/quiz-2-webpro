@@ -33,5 +33,6 @@ fi
 # Caching is safe here: config only reads env at runtime via the container env
 php artisan config:cache
 php artisan route:cache || true
+php artisan view:cache || true
 
 exec "$@"
