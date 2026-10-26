@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom - myITS Classroom</title>
+    <link rel="stylesheet" href="../global.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <script src="components.js"></script>
+</head>
+<body>
+    <my-topbar></my-topbar>
+
+    <div class="layout-container classroom-layout">
+        <my-sidebar active="classroom"></my-sidebar>
+
+        <main class="main-content classroom-main-content">
+            <div class="view-section classroom-page">
+
+                <div class="page-header classroom-page-header">
+                    <h2>Classroom</h2>
+                    <p>Akses materi perkuliahan dan kumpulkan tugas dari setiap mata kuliah.</p>
+                </div>
+
+                <div class="classroom-workspace" id="classroomApp">
+
+                    <!-- ===================================================
+                         PANEL KIRI — Daftar Mata Kuliah
+                         JS hanya menambahkan class 'is-active'/'is-expanded'
+                         =================================================== -->
+                    <aside class="course-panel" aria-label="Daftar mata kuliah">
+                        <div class="course-panel-heading">
+                            <span class="course-heading-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                    <path d="M3 5.5A2.5 2.5 0 0 1 5.5 3H21v16H5.5A2.5 2.5 0 0 0 3 21.5z"/>
+                                    <path d="M3 5.5v16M7 7h10M7 11h10"/>
+                                </svg>
+                            </span>
+                            <span>Daftar Mata Kuliah</span>
+                        </div>
+
+                        <!-- ======================================
+                             Mata Kuliah 1: Dasar Pemrograman
+                             ====================================== -->
+                        <div class="course-list" id="courseList">
+                            <section class="course-item" data-course-id="dasar-pemrograman">
+                                <button class="course-toggle" type="button"
+                                    aria-expanded="false"
+                                    aria-controls="lessons-dasar-pemrograman">
+                                    <span class="course-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H21v17H6.5A2.5 2.5 0 0 0 4 22z"/>
+                                            <path d="M4 5.5V22M8 7h9M8 11h9"/>
+                                        </svg>
+                                    </span>
+                                    <span class="course-copy">
+                                        <span class="course-name">Dasar Pemrograman (A)</span>
+                                        <span class="course-sks">3 SKS</span>
+                                    </span>
+                                    <svg class="course-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="m6 9 6 6 6-6"/>
+                                    </svg>
+                                </button>
+                                <ul class="lesson-list d-none" id="lessons-dasar-pemrograman">
+                                    <li><button class="lesson-nav-button" type="button" data-course="dasar-pemrograman" data-lesson="1">1. Pengenalan Pemrograman</button></li>
+                                    <li><button class="lesson-nav-button" type="button" data-course="dasar-pemrograman" data-lesson="2">2. Variabel dan Tipe Data</button></li>
+                                    <li><button class="lesson-nav-button" type="button" data-course="dasar-pemrograman" data-lesson="3">3. Struktur Kontrol</button></li>
+                                    <li><button class="lesson-nav-button" type="button" data-course="dasar-pemrograman" data-lesson="4">4. Fungsi dan Array</button></li>
+                                </ul>
+                            </section>
+
+                            <!-- ======================================
+                                 Mata Kuliah 2: Sistem Operasi
+                                 ====================================== -->
+                            <section class="course-item is-active is-expanded" data-course-id="sistem-operasi">
+                                <button class="course-toggle" type="button"
+                                    aria-expanded="true"
+                                    aria-controls="lessons-sistem-operasi">
+                                    <span class="course-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                            <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H21v17H6.5A2.5 2.5 0 0 0 4 22z"/>
+                                            <path d="M4 5.5V22M8 7h9M8 11h9"/>
+                                        </svg>
+                                    </span>
+                                    <span class="course-copy">
+                                        <span class="course-name">Sistem Operasi (B)</span>
+                                        <span class="course-sks">3 SKS</span>
+                                    </span>
+                                    <svg class="course-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="m6 9 6 6 6-6"/>
+                                    </svg>
+                                </button>
+                                <ul class="lesson-list" id="lessons-sistem-operasi">
+                                    <li><button class="lesson-nav-button" type="button" data-course="sistem-operasi" data-lesson="1">1. Pengantar Sistem Operasi</button></li>
+                                    <li><button class="lesson-nav-button is-active" type="button" data-course="sistem-operasi" data-lesson="2" aria-current="page">2. Manajemen Proses</button></li>
+                                    <li><button class="lesson-nav-button" type="button" data-course="sistem-operasi" data-lesson="3">3. Manajemen Memori</button></li>
+                                    <li><button class="lesson-nav-button" type="button" data-course="sistem-operasi" data-lesson="4">4. Sistem Berkas</button></li>
+                                </ul>
+                            </section>
+                        </div>
+                    </aside>
+
+                    <!-- ===================================================
+                         PANEL KANAN — Konten Aktif
+                         =================================================== -->
+                    <section class="classroom-content" aria-live="polite">
+
+                        <!-- =====================================================
+                             VIEW A: MATERI & TUGAS
+                             Ditampilkan secara default.
+                             ===================================================== -->
+                        <div id="courseView">
+
+                            <!-- Header Pelajaran — judul + tombol Megaphone -->
+                            <header class="classroom-lesson-header">
+                                <div>
+                                    <p class="classroom-eyebrow" id="lessonEyebrow">Bagian 2</p>
+                                    <h1 id="lessonTitle">Manajemen Proses</h1>
+                                    <p class="classroom-course-meta" id="lessonMeta">
+                                        Sistem Operasi (B) <span aria-hidden="true">•</span> 3 SKS
+                                    </p>
+                                </div>
+
+                                <!-- Tombol Pengumuman — berdiri sendiri, bukan bagian tab -->
+                                <button class="btn-announcement" id="btnOpenAnnouncement"
+                                    type="button" aria-label="Lihat pengumuman kelas">
+                                    <!-- Megaphone icon -->
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M3 11l19-9-9 19-2-8-8-2z"/>
+                                    </svg>
+                                    Pengumuman
+                                    <!-- Badge jumlah pengumuman — diisi JS -->
+                                    <span class="announcement-badge" id="announcementBadge"></span>
+                                </button>
+                            </header>
+
+                            <!-- Tab Switcher: hanya Materi & Tugas -->
+                            <div class="classroom-tabs" role="tablist" aria-label="Konten mata kuliah">
+                                <button class="classroom-tab is-active" id="tabMaterials" type="button"
+                                    role="tab" aria-selected="true" aria-controls="materialsPanel" data-tab="materials">
+                                    Materi Kuliah
+                                </button>
+                                <button class="classroom-tab" id="tabTasks" type="button"
+                                    role="tab" aria-selected="false" aria-controls="tasksPanel" data-tab="tasks">
+                                    Pengumpulan Tugas
+                                </button>
+                            </div>
+
+                            <!-- TAB: MATERI KULIAH -->
+                            <section class="classroom-tab-panel" id="materialsPanel"
+                                role="tabpanel" aria-labelledby="tabMaterials">
+                                <div id="materialsContent"></div>
+                            </section>
+
+                            <!-- TAB: PENGUMPULAN TUGAS -->
+                            <section class="classroom-tab-panel d-none" id="tasksPanel"
+                                role="tabpanel" aria-labelledby="tabTasks">
+                                <div id="tasksContent"></div>
+                            </section>
+
+                        </div><!-- /courseView -->
+
+                        <!-- =====================================================
+                             VIEW B: PENGUMUMAN
+                             Disembunyikan secara default.
+                             Mengambil alih seluruh panel kanan saat tombol diklik.
+                             ===================================================== -->
+                        <div id="announcementView" class="d-none">
+
+                            <!-- Header panel pengumuman — judul kiri, tombol kembali kanan -->
+                            <header class="classroom-lesson-header">
+                                <div>
+                                    <p class="classroom-eyebrow" id="annEyebrow">Pengumuman Kelas</p>
+                                    <h1 id="annTitle">Pengumuman</h1>
+                                    <p class="classroom-course-meta" id="annMeta"></p>
+                                </div>
+                                <button class="btn-back-announcement" id="btnCloseAnnouncement"
+                                    type="button" aria-label="Kembali ke materi">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M19 12H5"/><path d="m12 5-7 7 7 7"/>
+                                    </svg>
+                                    Kembali
+                                </button>
+                            </header>
+
+                            <!-- Konten pengumuman — diisi JS -->
+                            <div id="announcementsContent" class="classroom-stack"></div>
+
+                        </div><!-- /announcementView -->
+
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

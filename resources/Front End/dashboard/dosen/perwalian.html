@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perwalian - myITS Classroom</title>
+    <link rel="stylesheet" href="../../global.css">
+    <link rel="stylesheet" href="../dashboard.css">
+    <script src="components.js"></script>
+</head>
+<body>
+
+    <my-topbar></my-topbar>
+
+    <div class="layout-container">
+        <my-sidebar active="perwalian"></my-sidebar>
+
+        <main class="main-content">
+            <div class="view-section">
+
+                <div class="page-header">
+                    <h2>Perwalian Mahasiswa</h2>
+                    <p>Lihat dan kelola daftar kelas mahasiswa perwalian Anda.</p>
+                </div>
+
+                <div class="perwalian-layout">
+
+                    <!-- KOLOM KIRI — Daftar Mahasiswa -->
+                    <div class="perwalian-student-panel">
+                        <div class="perwalian-panel-header">
+                            <h3>Daftar Mahasiswa</h3>
+                            <div class="perwalian-search">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                </svg>
+                                <input type="text" id="searchMahasiswa" placeholder="Cari nama atau NRP...">
+                            </div>
+                        </div>
+                        <div class="perwalian-student-list" id="perwalianStudentList"></div>
+                    </div>
+
+                    <!-- KOLOM KANAN — Detail KRS -->
+                    <div class="perwalian-detail-panel" id="perwalianDetailPanel">
+
+                        <!-- Empty state -->
+                        <div class="perwalian-empty-state" id="perwalianEmptyState">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                            <p>Pilih mahasiswa dari daftar<br>untuk melihat kelas yang diambil.</p>
+                        </div>
+
+                        <!-- Detail -->
+                        <div id="perwalianDetailContent" class="d-none">
+
+                            <!-- Header: info mahasiswa + tombol Tambah Kelas -->
+                            <div class="perwalian-detail-header">
+                                <div class="perwalian-detail-student">
+                                    <div class="student-avatar-lg" id="detail-avatar">MH</div>
+                                    <div>
+                                        <div class="perwalian-detail-name" id="detail-name">Nama Mahasiswa</div>
+                                        <div class="perwalian-detail-meta">
+                                            <span id="detail-nrp">NRP</span>
+                                            &nbsp;·&nbsp;
+                                            <span id="detail-dept">Departemen</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="btn-primary-small" id="btnAddKelas">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <line x1="12" y1="5" x2="12" y2="19"/>
+                                        <line x1="5" y1="12" x2="19" y2="12"/>
+                                    </svg>
+                                    Tambah Kelas
+                                </button>
+                            </div>
+
+                            <!-- Info ringkas -->
+                            <div class="info-grid-4" style="flex-wrap:wrap; gap:16px 24px;">
+                                <div class="info-item">
+                                    <label>Semester</label>
+                                    <span id="detail-semester">—</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>Total SKS</label>
+                                    <span id="detail-sks">—</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>IPK Terakhir</label>
+                                    <span id="detail-ipk">—</span>
+                                </div>
+                            </div>
+
+                            <!-- Tabel Kelas -->
+                            <div>
+                                <div class="perwalian-krs-title">
+                                    <h4>Kelas yang Diambil</h4>
+                                </div>
+                                <div class="perwalian-krs-table">
+                                    <div class="perwalian-table-header">
+                                        <div class="p-col-kode">Kode MK</div>
+                                        <div class="p-col-nama">Nama Mata Kuliah</div>
+                                        <div class="p-col-kelas">Kelas</div>
+                                        <div class="p-col-sks">SKS</div>
+                                        <div class="p-col-aksi">Hapus</div>
+                                    </div>
+                                    <div id="perwalianKrsRows"></div>
+                                </div>
+                                <div class="perwalian-krs-footer">
+                                    Total SKS: <strong id="detail-total-sks">0</strong>
+                                </div>
+                            </div>
+
+                            <!-- Catatan -->
+                            <div class="form-group" style="margin-top:4px;">
+                                <label for="catatanPerwalian">Catatan Dosen Wali</label>
+                                <textarea id="catatanPerwalian" class="form-textarea" rows="3"
+                                    placeholder="Tambahkan catatan atau arahan untuk mahasiswa ini..."></textarea>
+                                <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+                                    <button class="btn-primary-small" id="btnSimpanCatatan" style="font-size:12px; padding:8px 16px;">
+                                        Simpan Catatan
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Tambah Kelas -->
+    <div class="modal-overlay" id="modalAddKelas" role="dialog" aria-modal="true" aria-labelledby="modalAddKelasTitle">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div>
+                    <h3 id="modalAddKelasTitle">Tambah Kelas</h3>
+                    <p style="font-size:12px; color:#64748B; margin:4px 0 0;">
+                        Untuk: <strong id="modal-student-name">—</strong>
+                    </p>
+                </div>
+                <button class="modal-close" data-close-modal="modalAddKelas" aria-label="Tutup">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-search-bar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input type="text" id="searchKelas" placeholder="Cari kode atau nama mata kuliah...">
+                </div>
+                <p style="font-size:12px; color:#94A3B8; margin-top:-4px;">Menampilkan mata kuliah tersedia untuk semester aktif.</p>
+                <div class="modal-results" id="modalKelasResults"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" data-close-modal="modalAddKelas">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal konfirmasi hapus MK -->
+    <div class="modal-overlay" id="modalHapusMK" role="dialog" aria-modal="true" aria-labelledby="modalHapusMKTitle">
+        <div class="modal-box" style="max-width:420px;">
+            <div class="modal-header">
+                <h3 id="modalHapusMKTitle">Konfirmasi Hapus</h3>
+                <button class="modal-close" data-close-modal="modalHapusMK" aria-label="Tutup">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="hapus-confirm-icon" aria-hidden="true">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                </div>
+                <p class="hapus-confirm-text">Hapus mata kuliah "<strong id="hapusMKNama">—</strong>" dari daftar kelas mahasiswa ini?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" data-close-modal="modalHapusMK">Batal</button>
+                <button class="btn-danger" id="btnKonfirmasiHapusMK">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="dosen.js"></script>
+</body>
+</html>

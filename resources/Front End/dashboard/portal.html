@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal - myITS Classroom</title>
+    <link rel="stylesheet" href="../global.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <!-- Memuat Komponen UI -->
+    <script src="components.js"></script>
+</head>
+<body>
+    
+    <!-- Memanggil Top Bar -->
+    <my-topbar></my-topbar>
+
+    <div class="layout-container">
+        
+        <!-- Memanggil Side Bar dengan penanda 'portal' yang aktif -->
+        <my-sidebar active="portal"></my-sidebar>
+
+        <main class="main-content">
+            <div class="view-section">
+                <!-- Welcome Banner -->
+                <div class="welcome-banner">
+                    <div class="banner-content">
+                        <span class="banner-subtitle">Prodi Teknik Informatika</span>
+                        <h2 class="banner-title">Selamat datang kembali<br><span id="banner-name">Mahasiswa</span>!</h2>
+                        <p class="banner-desc">Lanjutkan belajarmu. Cek tugas dan tonton kembali rekaman kelas di sini.</p>
+                    </div>
+                    <div class="banner-badge">Semester 5 (2024/2025)</div>
+                </div>
+
+                <!-- Stats Row -->
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <span class="stat-label">SKS Aktif</span>
+                        <span class="stat-value">20</span>
+                        <span class="stat-desc text-info">24 Total SKS</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Tugas Terkini</span>
+                        <span class="stat-value">3</span>
+                        <span class="stat-desc text-danger">2 tugas sudah terlambat</span>
+                    </div>
+                </div>
+
+                <!-- Quick Access -->
+                <div class="quick-access-card">
+                    <h3>Akses Cepat</h3>
+                    <div class="quick-links">
+                        <button class="quick-btn">Classroom</button>
+                        <button class="quick-btn">Library</button>
+                        <button class="quick-btn">KRS</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script fungsionalitas (Dropdown, API Simulation) -->
+    <script src="dashboard.js"></script>
+</body>
+</html>
