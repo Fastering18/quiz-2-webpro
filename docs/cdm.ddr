@@ -1,157 +1,142 @@
+# CDM (Conceptual Data Model) - Portal & Classroom Quiz 2 WebPro
+# Source of truth: database/migrations (final schema after 2026_10_26_130000).
+# Foreign keys and technical columns (storage keys, tokens, sessions, cache, jobs)
+# are not drawn here; see pdm.ddr. Relationships read: <one> < <many>.
+# Optional sides: Perpustakaan -> Pengguna (penerbit, may be null),
+# LaporanAdmin -> Pengguna (penanggap, null until an admin replies).
 Type: CDM
-Title: Sistem Web Fullstack Portal & Classroom ITS
+Title: CDM - Portal & Classroom Quiz 2 WebPro
 
 Entities:
-- Pengguna [x: 10, y: 465] {
-    User ID: varchar(16) [identifier];
+- Pengguna {
+    User ID: varchar(64) [identifier];
     Username: varchar(30) [mandatory];
     Nama Lengkap: varchar(100) [mandatory];
     Email: varchar(120) [mandatory];
-    Password Hash: varchar(255) [mandatory];
+    Kata Sandi: varchar(255) [mandatory];
     Role: varchar(20) [mandatory];
-    Foto Profil Key: varchar(255);
+    Foto Profil: varchar(255);
     Nomor Telepon: varchar(20);
     Alamat Rumah: varchar(255)
   }
 
-- Mahasiswa [x: 310, y: 89] {
-    NRP: varchar(14) [identifier];
-    User ID: varchar(16) [mandatory];
-    NIP Wali: varchar(18) [mandatory];
+- Mahasiswa {
+    NRP: varchar(32) [identifier];
     Departemen: varchar(80) [mandatory];
-    Semester Aktif: int [M];
-    Status: varchar(20) [M]
+    Semester Aktif: int [mandatory];
+    Status: varchar(20) [mandatory]
   }
 
-- Dosen [x: -282, y: 89] {
-    NIP: varchar(18) [identifier];
-    User ID: varchar(16) [mandatory];
+- Dosen {
+    NIP: varchar(32) [identifier];
     Departemen: varchar(80) [mandatory];
-    Status: varchar(20) [M]
+    Status: varchar(20) [mandatory]
   }
 
-- MataKuliah [x: -1090, y: 490] {
-    Kode MK: varchar(10) [identifier];
+- MataKuliah {
+    Kode MK: varchar(20) [identifier];
     Nama MK: varchar(120) [mandatory];
     SKS: int [mandatory];
-    Semester: int [M]
+    Semester: int [mandatory]
   }
 
-- KRS [x: -270, y: -429] {
-    KRS ID: varchar(16) [identifier];
-    NRP: varchar(14) [mandatory];
-    Semester: int [M];
+- Classroom {
+    Kelas ID: varchar(64) [identifier];
+    Nama Kelas: varchar(60) [mandatory];
     Semester Tahun: varchar(12) [mandatory];
-    Status ACC: varchar(20) [M];
+    Kuota Kelas: int [mandatory]
+  }
+
+- KRS {
+    KRS ID: varchar(32) [identifier];
+    Semester: int [mandatory];
+    Semester Tahun: varchar(12) [mandatory];
+    Status ACC: varchar(20) [mandatory];
     Tanggal Cetak: date
   }
 
-- DetailKRS [x: -1092, y: -429] {
-    Detail ID: int [identifier];
-    KRS ID: varchar(16) [mandatory];
-    Kelas ID: varchar(12) [mandatory];
+- DetailKRS {
+    Detail ID: bigint [identifier];
     Nilai Akhir: int
   }
 
-- Classroom [x: -1090, y: 170] {
-    Kelas ID: varchar(12) [identifier];
-    Kode MK: varchar(10) [mandatory];
-    NIP: varchar(18) [mandatory];
-    Nama Kelas: varchar(60) [mandatory];
-    Semester Tahun: varchar(12) [M];
-    Kuota Kelas: int [M]
-  }
-
-- BagianKelas [x: -1640, y: -460] {
-    Bagian ID: int [identifier];
-    Kelas ID: varchar(12) [mandatory];
-    Urutan: int [M];
+- BagianKelas {
+    Bagian ID: bigint [identifier];
+    Urutan: int [mandatory];
     Judul Bagian: varchar(160) [mandatory];
     Judul Ringkasan: varchar(160);
     Konten Ringkasan: varchar(5000)
   }
 
-- PengumumanClassroom [x: -1640, y: 220] {
-    Pengumuman ID: int [identifier];
-    Kelas ID: varchar(12) [mandatory];
+- PengumumanClassroom {
+    Pengumuman ID: bigint [identifier];
     Konten: varchar(2000);
-    Tanggal Unggah: date [M]
+    Tanggal Unggah: date [mandatory]
   }
 
-- MateriKelas [x: -1640, y: -89] {
-    Materi ID: int [identifier];
-    Bagian ID: int [mandatory];
+- MateriKelas {
+    Materi ID: bigint [identifier];
     Judul Materi: varchar(160) [mandatory];
-    Nama File: varchar(255) [M];
-    File Materi Key: varchar(255) [M];
-    Ukuran File: int [M];
-    Tanggal Unggah: date [M]
+    Nama File: varchar(255) [mandatory];
+    Ukuran File: int [mandatory];
+    Tanggal Unggah: date [mandatory]
   }
 
-- TugasKelas [x: -790, y: -160] {
-    Tugas ID: int [identifier];
-    Bagian ID: int [mandatory];
-    Urutan: int [M];
+- TugasKelas {
+    Tugas ID: bigint [identifier];
+    Urutan: int [mandatory];
     Judul Tugas: varchar(160) [mandatory];
     Deskripsi Tugas: varchar(2000);
     Format File: varchar(50);
-    Tenggat Waktu: datetime [M]
+    Tenggat Waktu: datetime [mandatory]
   }
 
-- PengumpulanTugas [x: -260, y: -160] {
-    Submit ID: int [identifier];
-    Tugas ID: int [mandatory];
-    NRP: varchar(14) [mandatory];
+- PengumpulanTugas {
+    Submit ID: bigint [identifier];
     Nama File: varchar(255) [mandatory];
-    File Jawaban Key: varchar(255) [mandatory];
-    Ukuran File: int [M];
+    Ukuran File: int [mandatory];
     Komentar: varchar(1000);
-    Tanggal Kirim: datetime [M];
-    Nilai Tugas: int
+    Tanggal Kirim: datetime [mandatory];
+    Nilai Tugas: int;
+    Terlambat: boolean [mandatory]
   }
 
-- Perpustakaan [x: 643, y: 465] {
-    Buku ID: varchar(12) [identifier];
+- Perpustakaan {
+    Buku ID: varchar(64) [identifier];
     Judul Buku: varchar(200) [mandatory];
     Penulis: varchar(160) [mandatory];
     Tahun: int;
-    Kategori: varchar(40) [M];
-    Publisher ID: varchar(16);
-    Nama File: varchar(255) [M];
-    File Dokumen Key: varchar(255) [M];
-    Ukuran File: int [M]
+    Kategori: varchar(40) [mandatory];
+    Nama File: varchar(255) [mandatory];
+    Ukuran File: int [mandatory]
   }
 
-- LaporanAdmin [x: -624, y: 465] {
-    Tiket ID: varchar(16) [identifier];
-    User ID: varchar(16) [mandatory];
+- LaporanAdmin {
+    Tiket ID: varchar(64) [identifier];
     Kategori Modul: varchar(40) [mandatory];
     Judul Laporan: varchar(150) [mandatory];
-    Deskripsi Kendala: varchar(2000) [M];
+    Deskripsi Kendala: varchar(2000) [mandatory];
     Lampiran Nama File: varchar(255);
-    Lampiran Bukti Key: varchar(255);
-    Status Tiket: varchar(20) [M];
-    Tanggal Lapor: datetime [M];
-    Admin ID: varchar(16);
+    Status Tiket: varchar(20) [mandatory];
+    Tanggal Lapor: datetime [mandatory];
     Tanggapan Admin: varchar(255);
     Tanggal Tanggapan: datetime
   }
 
-References:
-- Pengguna.User ID - Mahasiswa.User ID: akun mahasiswa
-- Pengguna.User ID - Dosen.User ID: akun dosen
-- Dosen.NIP < Mahasiswa.NIP Wali: membimbing wali
-- Mahasiswa.NRP < KRS.NRP: mengajukan rencana studi
-- KRS.KRS ID < DetailKRS.KRS ID: memuat daftar kelas
-- Classroom.Kelas ID < DetailKRS.Kelas ID: diikuti melalui
-- MataKuliah.Kode MK < Classroom.Kode MK: membuka kelas
-- Dosen.NIP < Classroom.NIP: mengampu kelas
-- Classroom.Kelas ID < BagianKelas.Kelas ID: terbagi atas
-- BagianKelas.Bagian ID < MateriKelas.Bagian ID: menyediakan materi
-- BagianKelas.Bagian ID < TugasKelas.Bagian ID: memberikan tugas
-- TugasKelas.Tugas ID < PengumpulanTugas.Tugas ID: menerima jawaban
-- Mahasiswa.NRP < PengumpulanTugas.NRP: mengumpulkan tugas
-- Pengguna.User ID < LaporanAdmin.User ID: mengirim laporan
-- Pengguna.User ID < LaporanAdmin.Admin ID: menanggapi laporan
-- PengumumanClassroom.Kelas ID > Classroom.Kelas ID: mengumumkan di kelas
-- Perpustakaan.Publisher ID > Pengguna.User ID: mengunggah
+Ref: Pengguna - Mahasiswa: berperan sebagai
+Ref: Pengguna - Dosen: berperan sebagai
+Ref: Dosen < Mahasiswa: membimbing sebagai wali
+Ref: Dosen < Classroom: mengampu
+Ref: MataKuliah < Classroom: dibuka menjadi
+Ref: Mahasiswa < KRS: mengisi
+Ref: KRS < DetailKRS: memuat
+Ref: Classroom < DetailKRS: diikuti melalui
+Ref: Classroom < PengumumanClassroom: memiliki pengumuman
+Ref: Classroom < BagianKelas: terbagi atas
+Ref: BagianKelas < MateriKelas: menyediakan
+Ref: BagianKelas < TugasKelas: memberikan
+Ref: TugasKelas < PengumpulanTugas: menerima
+Ref: Mahasiswa < PengumpulanTugas: mengumpulkan
+Ref: Pengguna < Perpustakaan: menerbitkan
+Ref: Pengguna < LaporanAdmin: melaporkan
+Ref: Pengguna < LaporanAdmin: menanggapi
