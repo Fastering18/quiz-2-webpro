@@ -36,6 +36,8 @@
 
 ## Docker / Deploy
 
+The image is based on `php:8.4-apache` (dependencies require PHP >= 8.4.1).
+
 **Local (Docker + Postgres):**
 
 ```bash

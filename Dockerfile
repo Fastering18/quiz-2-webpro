@@ -1,11 +1,13 @@
 # syntax=docker/dockerfile:1
+# Composer image only resolves vendor/ (platform checks ignored here; final image is PHP 8.4)
 FROM composer:2 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --no-progress --no-scripts \
     --prefer-dist --optimize-autoloader --ignore-platform-reqs
 
-FROM php:8.3-apache
+# PHP 8.4 required: composer.lock dependencies need PHP >= 8.4.1
+FROM php:8.4-apache
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends libpq-dev libsqlite3-dev libzip-dev libonig-dev unzip \
