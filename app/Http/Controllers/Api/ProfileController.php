@@ -34,6 +34,7 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
+            'nama_lengkap' => ['sometimes', 'required', 'string', 'max:100'],
             'nomor_telepon' => ['nullable', 'string', 'max:20'],
             'alamat_rumah' => ['nullable', 'string', 'max:255'],
             'foto' => ['nullable', ...$files->rules('avatars')],
@@ -41,6 +42,7 @@ class ProfileController extends Controller
         ]);
 
         $dataToUpdate = [
+            'nama_lengkap' => $validated['nama_lengkap'] ?? $user->nama_lengkap,
             'nomor_telepon' => $validated['nomor_telepon'] ?? $user->nomor_telepon,
             'alamat_rumah' => $validated['alamat_rumah'] ?? $user->alamat_rumah,
         ];
@@ -73,7 +75,7 @@ class ProfileController extends Controller
 
         $validated = $request->validate([
             'current_password' => ['required', 'string'],
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'password' => ['required', 'confirmed', 'different:current_password', Password::defaults()],
         ]);
 
         if (! Hash::check($validated['current_password'], $user->password_hash)) {
@@ -90,4 +92,16 @@ class ProfileController extends Controller
             'message' => 'Kata sandi berhasil diperbarui.',
         ]);
     }
+
+    /** Remove the profile photo ("Ganti Foto" -> reset). */
+    public function destroyPhoto(Request $request, FileStorage $files): JsonResponse
+    {
+        $user = $request->user();
+        $old = $user->foto_profil_key;
+        $user->update(['foto_profil_key' => null]);
+        $files->delete($old);
+
+        return response()->json(['message' => 'Foto profil berhasil dihapus.', 'profile' => $user->fresh()]);
+    }
 }
+

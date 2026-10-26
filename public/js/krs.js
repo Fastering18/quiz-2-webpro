@@ -15,6 +15,34 @@ document.addEventListener("DOMContentLoaded", async function () {
         const latestKrs = krsList[0];
         const detailRes = await window.apiFetch(`/api/krs/${latestKrs.krs_id}`);
         const krs = detailRes?.krs || latestKrs;
+
+        // "Unduh PDF": authorized download from the API (Bearer token), falls back to print
+        const btnPdf = document.getElementById("btnUnduhKrs");
+        if (btnPdf) {
+            btnPdf.addEventListener("click", async function () {
+                btnPdf.disabled = true;
+                try {
+                    const r = await fetch(`/api/krs/${encodeURIComponent(krs.krs_id)}/pdf`, {
+                        headers: { "Accept": "application/pdf", "Authorization": "Bearer " + (localStorage.getItem("auth_token") || "") },
+                        credentials: "same-origin"
+                    });
+                    if (!r.ok) throw new Error("HTTP " + r.status);
+                    const url = URL.createObjectURL(await r.blob());
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `KRS_${krs.nrp}_${String(krs.semester_tahun).replace("/", "-")}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                } catch (e) {
+                    console.error(e);
+                    window.print();
+                } finally {
+                    btnPdf.disabled = false;
+                }
+            });
+        }
         const totalSks = detailRes?.total_sks ?? 0;
 
         const mhs = krs.mahasiswa || {};

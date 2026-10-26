@@ -19,11 +19,20 @@ class LaporanAdminController extends Controller
     {
         $user = $request->user();
         $status = $request->query('status');
+        $search = $request->query('search');
 
         $query = LaporanAdmin::with(['pelapor', 'admin']);
 
         if ($user->role !== 'admin') {
             $query->where('user_id', $user->user_id);
+        }
+
+        if ($search) {
+            $query->where(fn ($q) => $q->where('judul_laporan', 'like', "%{$search}%")->orWhere('deskripsi_kendala', 'like', "%{$search}%"));
+        }
+
+        if ($kategori = $request->query('kategori')) {
+            $query->where('kategori_modul', $kategori);
         }
 
         if ($status) {
@@ -143,4 +152,36 @@ class LaporanAdminController extends Controller
             'report' => $report->load(['pelapor', 'admin']),
         ]);
     }
+
+    /** Categories for the "Kategori Kendala" dropdown and the allowed status filters. */
+    public function categories(): JsonResponse
+    {
+        return response()->json([
+            'categories' => ['Portal Mahasiswa', 'Classroom', 'Perpustakaan', 'KRS', 'Profil dan Akun', 'Lainnya'],
+            'statuses' => ['Terkirim', 'Diproses', 'Selesai', 'Ditolak'],
+        ]);
+    }
+
+    /** Withdraw a ticket: its owner while it has no answer yet, or an admin. Removes the attachment too. */
+    public function destroy(Request $request, string $tiketId, FileStorage $files): JsonResponse
+    {
+        $user = $request->user();
+        $report = LaporanAdmin::findOrFail($tiketId);
+
+        if ($user->role !== 'admin') {
+            if ($report->user_id !== $user->user_id) {
+                return response()->json(['message' => 'Akses ditolak.'], 403);
+            }
+            if ($report->tanggapan_admin !== null) {
+                return response()->json(['message' => 'Laporan yang sudah ditanggapi tidak dapat ditarik.'], 409);
+            }
+        }
+
+        $key = $report->lampiran_bukti_key;
+        $report->delete();
+        $files->delete($key);
+
+        return response()->json(['message' => 'Laporan berhasil dihapus.']);
+    }
 }
+

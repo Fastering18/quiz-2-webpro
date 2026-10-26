@@ -28,7 +28,7 @@ services:
       LOG_CHANNEL: stderr
       DB_CONNECTION: pgsql
       DB_URL: postgresql://quiz2:quiz2@db:5432/quiz2?sslmode=disable
-      SESSION_DRIVER: array
+      SESSION_DRIVER: database
       CACHE_STORE: database
       QUEUE_CONNECTION: database
 

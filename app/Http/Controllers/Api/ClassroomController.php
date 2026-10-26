@@ -292,4 +292,93 @@ class ClassroomController extends Controller
             'task' => $task,
         ], 201);
     }
+
+    /** Edit an announcement. */
+    public function updateAnnouncement(Request $request, string|int $id): JsonResponse
+    {
+        $announcement = PengumumanClassroom::findOrFail($id);
+        $this->authorizeTeaching($request, (string) $announcement->kelas_id);
+
+        $validated = $request->validate(['konten' => ['required', 'string', 'max:2000']]);
+        $announcement->update(['konten' => $validated['konten']]);
+
+        return response()->json(['message' => 'Pengumuman berhasil diperbarui.', 'announcement' => $announcement->fresh()]);
+    }
+
+    /** Delete an announcement. */
+    public function destroyAnnouncement(Request $request, string|int $id): JsonResponse
+    {
+        $announcement = PengumumanClassroom::findOrFail($id);
+        $this->authorizeTeaching($request, (string) $announcement->kelas_id);
+        $announcement->delete();
+
+        return response()->json(['message' => 'Pengumuman berhasil dihapus.']);
+    }
+
+    /** Edit a section (title, summary, order). */
+    public function updateSection(Request $request, string|int $bagianId): JsonResponse
+    {
+        $section = BagianKelas::findOrFail($bagianId);
+        $this->authorizeTeaching($request, $section->kelas_id);
+
+        $validated = $request->validate([
+            'judul_bagian' => ['sometimes', 'required', 'string', 'max:160'],
+            'judul_ringkasan' => ['nullable', 'string', 'max:160'],
+            'konten_ringkasan' => ['nullable', 'string', 'max:5000'],
+            'urutan' => ['nullable', 'integer', 'min:1'],
+        ]);
+        $section->update(array_filter($validated, fn ($v, $k) => $v !== null || in_array($k, ['judul_ringkasan', 'konten_ringkasan'], true), ARRAY_FILTER_USE_BOTH));
+
+        return response()->json(['message' => 'Bagian kelas berhasil diperbarui.', 'section' => $section->fresh()]);
+    }
+
+    /** Edit a material; send `file` (multipart POST) to replace the stored document. */
+    public function updateMaterial(Request $request, string|int $materiId, FileStorage $files): JsonResponse
+    {
+        $material = MateriKelas::with('bagianKelas')->findOrFail($materiId);
+        $this->authorizeTeaching($request, (string) $material->bagianKelas?->kelas_id);
+
+        $validated = $request->validate([
+            'judul_materi' => ['sometimes', 'required', 'string', 'max:160'],
+            'file' => ['nullable', ...$files->rules('materials')],
+        ]);
+
+        $data = [];
+        if (isset($validated['judul_materi'])) {
+            $data['judul_materi'] = $validated['judul_materi'];
+        }
+        $oldKey = null;
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $oldKey = $material->file_materi_key;
+            $data['nama_file'] = $file->getClientOriginalName();
+            $data['ukuran_file'] = $file->getSize();
+            $data['file_materi_key'] = $files->store($file, 'materials/'.$material->bagianKelas->kelas_id);
+        }
+        $material->update($data);
+        if ($oldKey) {
+            $files->delete($oldKey);
+        }
+
+        return response()->json(['message' => 'Materi berhasil diperbarui.', 'material' => $material->fresh()]);
+    }
+
+    /** Edit a task (title, description, formats, deadline, order). */
+    public function updateTask(Request $request, string|int $tugasId): JsonResponse
+    {
+        $task = TugasKelas::with('bagianKelas')->findOrFail($tugasId);
+        $this->authorizeTeaching($request, (string) $task->bagianKelas?->kelas_id);
+
+        $validated = $request->validate([
+            'judul_tugas' => ['sometimes', 'required', 'string', 'max:160'],
+            'deskripsi_tugas' => ['nullable', 'string', 'max:2000'],
+            'format_file' => ['sometimes', 'required', 'string', 'max:50'],
+            'tenggat_waktu' => ['sometimes', 'required', 'date'],
+            'urutan' => ['sometimes', 'required', 'integer', 'min:1'],
+        ]);
+        $task->update($validated);
+
+        return response()->json(['message' => 'Tugas berhasil diperbarui.', 'task' => $task->fresh()]);
+    }
 }
+

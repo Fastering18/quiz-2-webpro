@@ -18,6 +18,9 @@
             ...(options.headers || {})
         };
 
+        const token = localStorage.getItem("auth_token");
+        if (token && !headers["Authorization"]) headers["Authorization"] = "Bearer " + token;
+
         const csrf = getCsrfToken();
         if (csrf) {
             headers["X-CSRF-TOKEN"] = csrf;

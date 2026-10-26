@@ -24,9 +24,9 @@ services:
         value: pgsql
       - key: DB_URL
         sync: false
-      # No sessions table migration exists and the API is token-based, so use array sessions
+      # The browser UI needs persistent sessions (table `sessions` exists)
       - key: SESSION_DRIVER
-        value: array
+        value: database
       - key: CACHE_STORE
         value: database
       - key: QUEUE_CONNECTION

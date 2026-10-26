@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Public Authentication Route
-Route::post('/login', [AuthController::class, 'login'])->name('api.login');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login')->name('api.login');
 
 Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])->name('api.password.forgot');
 Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('api.password.reset');
@@ -48,6 +48,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/classrooms/{id}/sections', [ClassroomController::class, 'storeSection'])->name('api.classrooms.sections.store');
     Route::post('/sections/{id}/materials', [ClassroomController::class, 'storeMaterial'])->name('api.sections.materials.store');
     Route::post('/sections/{id}/tasks', [ClassroomController::class, 'storeTask'])->name('api.sections.tasks.store');
+    Route::put('/announcements/{id}', [ClassroomController::class, 'updateAnnouncement'])->name('api.announcements.update');
+    Route::delete('/announcements/{id}', [ClassroomController::class, 'destroyAnnouncement'])->name('api.announcements.destroy');
+    Route::put('/sections/{id}', [ClassroomController::class, 'updateSection'])->name('api.sections.update');
+    Route::put('/materials/{id}', [ClassroomController::class, 'updateMaterial'])->name('api.materials.update');
+    Route::post('/materials/{id}', [ClassroomController::class, 'updateMaterial'])->name('api.materials.update.multipart'); // multipart replace
+    Route::put('/tasks/{id}', [ClassroomController::class, 'updateTask'])->name('api.tasks.update');
     Route::delete('/sections/{id}', [ClassroomController::class, 'destroySection'])->name('api.sections.destroy');
     Route::delete('/materials/{id}', [ClassroomController::class, 'destroyMaterial'])->name('api.materials.destroy');
     Route::delete('/tasks/{id}', [ClassroomController::class, 'destroyTask'])->name('api.tasks.destroy');
@@ -61,6 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // KRS (Kartu Rencana Studi)
     Route::get('/krs', [KrsController::class, 'index'])->name('api.krs.index');
     Route::get('/krs/{id}', [KrsController::class, 'show'])->name('api.krs.show');
+    Route::get('/krs/{id}/pdf', [KrsController::class, 'pdf'])->name('api.krs.pdf');
     Route::post('/krs', [KrsController::class, 'store'])->name('api.krs.store');
     Route::patch('/krs/{id}/approve', [KrsController::class, 'approve'])->name('api.krs.approve');
 
@@ -72,8 +79,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Laporan Admin (Support Tickets)
     Route::get('/reports', [LaporanAdminController::class, 'index'])->name('api.reports.index');
+    Route::get('/reports/categories', [LaporanAdminController::class, 'categories'])->name('api.reports.categories');
     Route::get('/reports/{id}', [LaporanAdminController::class, 'show'])->name('api.reports.show');
     Route::post('/reports', [LaporanAdminController::class, 'store'])->name('api.reports.store');
+    Route::delete('/reports/{id}', [LaporanAdminController::class, 'destroy'])->name('api.reports.destroy');
     Route::patch('/reports/{id}/reply', [LaporanAdminController::class, 'reply'])->name('api.reports.reply');
 
     // Authorized file downloads (presigned URL redirect / JSON)
@@ -83,6 +92,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('api.profile.show');
     Route::put('/profile', [ProfileController::class, 'update'])->name('api.profile.update');
     Route::post('/profile', [ProfileController::class, 'update'])->name('api.profile.update.multipart'); // multipart (PHP can't parse PUT bodies)
+    Route::delete('/profile/photo', [ProfileController::class, 'destroyPhoto'])->name('api.profile.photo.destroy');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('api.profile.password');
 
     // Admin module (role: admin)

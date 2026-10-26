@@ -62,6 +62,12 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get();
 
+            // Overdue tasks (no submission and the deadline has passed): "2 tugas sudah terlambat"
+            $overdue = TugasKelas::whereHas('bagianKelas', fn ($q) => $q->whereIn('kelas_id', $enrolledClassIds))
+                ->whereDoesntHave('pengumpulan', fn ($q) => $q->where('nrp', $mahasiswa->nrp))
+                ->where('tenggat_waktu', '<', now())
+                ->count();
+
             // Recent announcements across enrolled classes
             $recentAnnouncements = PengumumanClassroom::with(['classroom.mataKuliah'])
                 ->whereIn('kelas_id', $enrolledClassIds)
@@ -82,6 +88,8 @@ class DashboardController extends Controller
                     'total_sks' => $totalSks,
                     'total_kelas' => $enrolledClassrooms->count(),
                     'tugas_belum_selesai' => $pendingTasks->count(),
+                    'tugas_terlambat' => $overdue,
+                    'status_krs' => $activeKrs?->status_acc,
                     'semester_tahun' => $activeKrs?->semester_tahun ?? '2024/Ganjil',
                 ],
                 'enrolled_classrooms' => $enrolledClassrooms->values(),
@@ -101,6 +109,12 @@ class DashboardController extends Controller
                 'user' => $user,
                 'dosen' => $dosen,
                 'total_kelas_ajar' => $classes->count(),
+                'perlu_dinilai' => \App\Models\PengumpulanTugas::whereNull('nilai_tugas')
+                    ->whereHas('tugas.bagianKelas', fn ($q) => $q->whereIn('kelas_id', $classes->pluck('kelas_id')))
+                    ->count(),
+                'krs_menunggu' => Krs::where('status_acc', 'Menunggu')
+                    ->whereHas('mahasiswa', fn ($q) => $q->where('nip_wali', $dosen?->nip))
+                    ->count(),
                 'classrooms' => $classes,
             ]);
         }

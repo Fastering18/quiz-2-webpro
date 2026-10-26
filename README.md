@@ -188,3 +188,31 @@ an invalid/expired/used token gives `422` (`errors.token`). Limited to 10 attemp
 | `MAIL_USERNAME`, `MAIL_PASSWORD` | SMTP credentials (`sync: false` in `render.yaml`) |
 | `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | `support@brahmanapriambudi.my.id`, `Portal Quiz 2 WebPro` |
 | `FRONTEND_URL` | base URL of the web app for the reset link (defaults to `APP_URL`) |
+
+## API gaps filled
+
+Audit of `docs/design-elements/*.png` (login, dashboard, class materi/tugas, KRS, library, lapor + states, profile + states) against the API.
+Already covered before: login/logout/`me`, dashboard, classes, tasks + submit, grading, KRS list/submit/approve, library search + download, reports + admin reply, profile + photo + password, admin module.
+
+| Design element | Gap | Now |
+| --- | --- | --- |
+| KRS "Unduh PDF" / "Cetak" | no PDF export | `GET /api/krs/{id}/pdf` (dependency-free PDF; owner, dosen wali, dosen of a class in it, admin). The button downloads it; "Cetak" prints |
+| KRS semester selector | no filter | `GET /api/krs?semester_tahun=&status_acc=&nrp=` |
+| KRS privacy | any user could read any KRS by id; any dosen could approve any KRS | `show`/`pdf` require owner / wali / teaching dosen / admin; `approve` only the student's dosen wali or admin; a dosen only lists KRS of their students and classes; an approved KRS cannot be overwritten by the student (`409`) |
+| Class: edit/delete announcement | missing | `PUT/DELETE /api/announcements/{id}` |
+| Class: edit section / material / task | only create + delete existed | `PUT /api/sections/{id}`, `PUT /api/materials/{id}` (`POST` + `file` replaces the document), `PUT /api/tasks/{id}` |
+| Mark / grade | any dosen could grade any submission | only the class's dosen or admin |
+| Dashboard "n tugas sudah terlambat" | missing | `summary.tugas_terlambat`, `summary.status_krs`; dosen dashboard: `perlu_dinilai`, `krs_menunggu` |
+| Lapor: category dropdown, history filter, withdraw | missing | `GET /api/reports/categories` (categories + statuses), `GET /api/reports?kategori=&status=&search=`, `DELETE /api/reports/{id}` (owner while unanswered, or admin; removes the attachment) |
+| Profile: "Nama Lengkap" is editable | name was ignored | `PUT/POST /api/profile` accepts `nama_lengkap` (required when sent) |
+| Profile: "Ganti Foto" | could not remove a photo | `DELETE /api/profile/photo` |
+| Profile: change password | new password could equal the old one | `different:current_password` rule |
+| Login: "Lupa kata sandi?" | the form only simulated the request | wired to `POST /api/forgot-password`; `/reset-password` page + `POST /api/reset-password` |
+| Browser login → portal | sessions were `array` (lost every request: CSRF `419`, `/portal` redirected back to login); the custom domain was not a Sanctum stateful host; the UI never sent its token | sessions use the `sessions` table (an `array` driver is upgraded to `database` outside tests), the request host is stateful, `public/js/api.js` sends `Authorization: Bearer <auth_token>`, proxies are trusted (HTTPS, client IP) |
+
+Cross-cutting:
+- **JSON errors** for `/api/*` (or `Accept: application/json`), in Indonesian: `401` "belum masuk", `403`, `404`, `405`, `413`, `419`, `422` (`message` = first error, plus `errors`), `429`, `500` (generic, no internals). HTML pages keep the normal error pages.
+- **CORS** (`config/cors.php`): paths `api/*` and `sanctum/csrf-cookie`, all methods/headers (incl. `Authorization`), `Content-Disposition` exposed. `CORS_ALLOWED_ORIGINS` is a comma separated list, default `*`; with explicit origins credentials are allowed.
+- **Rate limiting**: `POST /api/login` 10/min per username+IP and 30/min per IP (`429`); all other `/api` routes 120/min per user or IP; forgot/reset password limits as above.
+- Not implied by any design and therefore not built: a notifications feed (the dashboard's announcements/tasks cover it).
+- Report statuses are `Terkirim`, `Diproses`, `Selesai`, `Ditolak`; the design's "Baru" badge is `Terkirim`.

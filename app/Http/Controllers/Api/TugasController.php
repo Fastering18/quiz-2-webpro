@@ -171,7 +171,11 @@ class TugasController extends Controller
             ], 403);
         }
 
-        $submission = PengumpulanTugas::findOrFail($submitId);
+        $submission = PengumpulanTugas::with('tugas.bagianKelas')->findOrFail($submitId);
+
+        if (! FileController::canAccessClass($user, (string) $submission->tugas?->bagianKelas?->kelas_id)) {
+            return response()->json(['message' => 'Hanya dosen pengampu kelas ini atau admin yang dapat menilai.'], 403);
+        }
 
         $validated = $request->validate([
             'nilai_tugas' => ['required', 'integer', 'min:0', 'max:100'],
