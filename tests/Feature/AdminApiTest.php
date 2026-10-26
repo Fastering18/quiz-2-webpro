@@ -54,7 +54,7 @@ class AdminApiTest extends TestCase
 
     public function test_login_and_me_include_role(): void
     {
-        $this->postJson('/api/login', ['username' => 'admin', 'password' => 'admin'])
+        $this->postJson('/api/login', ['username' => 'admin', 'password' => 'password'])
             ->assertStatus(200)
             ->assertJsonPath('role', 'admin');
 
@@ -68,7 +68,7 @@ class AdminApiTest extends TestCase
 
         $this->getJson('/api/admin/stats')->assertStatus(200)
             ->assertJsonPath('stats.pengguna.admin', 1)
-            ->assertJsonPath('stats.pengguna.dosen', 1)
+            ->assertJsonPath('stats.pengguna.dosen', 3)
             ->assertJsonStructure(['stats' => ['pengguna' => ['total'], 'kelas', 'buku', 'tiket' => ['terbuka']]]);
 
         $this->getJson('/api/dashboard')->assertStatus(200)
@@ -117,7 +117,7 @@ class AdminApiTest extends TestCase
         ])->assertStatus(201)->assertJsonPath('user.role', 'admin');
 
         $this->assertDatabaseHas('pengguna', ['username' => 'admin2', 'role' => 'admin']);
-        $this->assertDatabaseCount('mahasiswa', 2);
+        $this->assertDatabaseCount('mahasiswa', 9);
     }
 
     public function test_create_user_validation(): void
@@ -139,7 +139,7 @@ class AdminApiTest extends TestCase
         $this->actAsAdmin();
 
         $this->getJson('/api/admin/users?role=dosen')->assertStatus(200)
-            ->assertJsonCount(1, 'data');
+            ->assertJsonCount(3, 'data');
         $this->getJson('/api/admin/users?q=lontong')->assertJsonCount(1, 'data');
         $this->getJson('/api/admin/users?role=bogus')->assertStatus(422);
 
@@ -246,12 +246,12 @@ class AdminApiTest extends TestCase
         $mhs = Mahasiswa::first();
 
         $krs = $this->postJson('/api/admin/krs', [
-            'nrp' => $mhs->nrp, 'semester' => 4, 'semester_tahun' => '2025/Genap', 'kelas_ids' => ['CLS_SO_B'],
+            'nrp' => $mhs->nrp, 'semester' => 4, 'semester_tahun' => '2026/Genap', 'kelas_ids' => ['CLS_SO_B'],
         ])->assertStatus(201)->assertJsonPath('krs.status_acc', 'Disetujui');
         $krsId = $krs->json('krs.krs_id');
 
         $this->postJson('/api/admin/krs', [
-            'nrp' => $mhs->nrp, 'semester' => 4, 'semester_tahun' => '2025/Genap',
+            'nrp' => $mhs->nrp, 'semester' => 4, 'semester_tahun' => '2026/Genap',
         ])->assertStatus(409);
 
         $this->postJson("/api/admin/krs/{$krsId}/kelas", ['kelas_id' => 'CLS_SO_B'])->assertStatus(409);
@@ -276,6 +276,6 @@ class AdminApiTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         $this->assertSame(1, User::where('username', 'admin')->count());
-        $this->assertSame(1, User::where('role', 'dosen')->count());
+        $this->assertSame(3, User::where('role', 'dosen')->count());
     }
 }

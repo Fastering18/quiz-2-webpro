@@ -181,7 +181,8 @@ class FileUploadTest extends TestCase
 
     public function test_student_submits_replaces_and_downloads_submission(): void
     {
-        $task = TugasKelas::first(); // zip,pdf
+        $task = TugasKelas::first(); // zip,pdf,c
+        $task->update(['tenggat_waktu' => now()->addDays(3)]);
         $student = $this->student();
         Sanctum::actingAs($student);
         $h = ['Accept' => 'application/json'];

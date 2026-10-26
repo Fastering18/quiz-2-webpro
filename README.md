@@ -216,3 +216,31 @@ Cross-cutting:
 - **Rate limiting**: `POST /api/login` 10/min per username+IP and 30/min per IP (`429`); all other `/api` routes 120/min per user or IP; forgot/reset password limits as above.
 - Not implied by any design and therefore not built: a notifications feed (the dashboard's announcements/tasks cover it).
 - Report statuses are `Terkirim`, `Diproses`, `Selesai`, `Ditolak`; the design's "Baru" badge is `Terkirim`.
+
+## Demo data and accounts
+
+`php artisan migrate:fresh --seed` (or `RESET_DB=1` on the container) produces a complete, idempotent demo dataset
+(the seeder runs in one transaction and does nothing when the data already exists, except making sure `admin` exists).
+**All demo accounts use the password `password`.** Mahasiswa and dosen log in with their NRP / NIP.
+
+| Role | Username | Name | Notes |
+| --- | --- | --- | --- |
+| admin | `admin` | Administrator Akademik | admin API, answers reports |
+| dosen | `198501012010121001` | Dr. Sarwosri, S.Kom., M.T. | wali of 5025251131, 5025251169, 5025251132; teaches Sistem Operasi (B), PBO (A), Basis Data (C) |
+| dosen | `197803152005011002` | Prof. Dr. Ir. Bambang Nugroho, M.Sc. | wali of 5025251140, 5025251155, 5025251172; teaches Jaringan Komputer (A), Kecerdasan Buatan (A), Dasar Pemrograman (A, 2025/Genap) |
+| dosen | `198208202008012003` | Dr. Rina Kartika, S.T., M.Sc. | wali of 5025251180, 5025251195; teaches Struktur Data (A), Pemrograman Web (B) |
+| mahasiswa | `5025251131` | Muhammad Azka Asyrafany | KRS 2026/Ganjil **Disetujui** (SO, PBO, BD, JK = 13 SKS) + graded 2025/Genap; graded, late and on-time submissions; 3 reports (Diproses/Terkirim/Selesai) |
+| mahasiswa | `5025251169` | Kevin Lontong | KRS **Menunggu**; overdue task without submission; open+answered report |
+| mahasiswa | `5025251132` | Siti Nurhaliza | KRS Disetujui; graded + ungraded submissions |
+| mahasiswa | `5025251140` | Budi Santoso | KRS Disetujui; late graded submission |
+| mahasiswa | `5025251155` | Dewi Lestari | KRS **Menunggu**; open report |
+| mahasiswa | `5025251172` | Rizky Pratama | KRS **Ditolak** (7 classes); answered/rejected report |
+| mahasiswa | `5025251180` | Anisa Putri | KRS Disetujui |
+| mahasiswa | `5025251195` | Fajar Nugroho | KRS **Menunggu** |
+
+Also seeded: 8 mata kuliah, 8 classes (7 in 2026/Ganjil + 1 past), 8 announcements, 12 sections (Sistem Operasi (B) has the 4 sections of the design),
+10 materials, 11 tasks (overdue, due soon and later), 9 submissions (graded/ungraded, on time/late), 9 library books and 7 reports
+(`Terkirim`, `Diproses`, `Selesai`, `Ditolak`; open and answered).
+
+Placeholder files: small real PDF/TXT documents are uploaded for materials, submissions and library books to the configured disk (S3 on Render, otherwise the local disk).
+Seeding never fails because of storage: if the disk cannot be written (or `SEED_FILES=false`, or in tests) the rows are created with `file_*_key = null` (`file_url` is `null`).

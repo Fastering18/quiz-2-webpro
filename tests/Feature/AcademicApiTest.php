@@ -66,7 +66,7 @@ class AcademicApiTest extends TestCase
                 'announcements',
             ])
             ->assertJsonPath('user.nrp', $student->mahasiswa->nrp)
-            ->assertJsonPath('summary.total_sks', 10);
+            ->assertJsonPath('summary.total_sks', 13);
     }
 
     public function test_student_can_view_enrolled_classrooms_and_details(): void
@@ -153,12 +153,12 @@ class AcademicApiTest extends TestCase
         $showResponse = $this->getJson('/api/krs/'.$krs->krs_id);
         $showResponse->assertStatus(200)
             ->assertJsonPath('krs.krs_id', $krs->krs_id)
-            ->assertJsonPath('total_sks', 10);
+            ->assertJsonPath('total_sks', 13);
 
         // Submit next semester KRS
         $submitResponse = $this->postJson('/api/krs', [
             'semester' => 4,
-            'semester_tahun' => '2025/Genap',
+            'semester_tahun' => '2026/Genap',
             'kelas_ids' => ['CLS_SO_B', 'CLS_PBO_A'],
         ]);
 

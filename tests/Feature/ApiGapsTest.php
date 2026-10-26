@@ -248,7 +248,7 @@ class ApiGapsTest extends TestCase
         $this->getJson('/api/reports/categories')->assertOk()->assertJsonFragment(['Profil dan Akun']);
         $id = $this->postJson('/api/reports', ['kategori_modul' => 'KRS', 'judul_laporan' => 'PDF KRS gagal', 'deskripsi_kendala' => 'Tidak bisa diunduh'])->json('report.tiket_id');
 
-        $this->getJson('/api/reports?kategori=KRS&search=PDF')->assertOk()->assertJsonCount(1, 'data');
+        $this->getJson('/api/reports?kategori=KRS&search='.urlencode('PDF KRS gagal'))->assertOk()->assertJsonCount(1, 'data');
         $this->getJson('/api/reports?search=zzzz')->assertOk()->assertJsonCount(0, 'data');
 
         Sanctum::actingAs($this->otherDosen());
