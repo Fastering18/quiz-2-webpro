@@ -637,7 +637,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <tr>
                     <td><code>${window.escapeHtml(c.kelas_id)}</code></td>
                     <td><strong>${window.escapeHtml(mk.nama_mk || c.kode_mk)}</strong> (${window.escapeHtml(c.kode_mk)})</td>
-                    <td>${window.escapeHtml(c.nama_kelas)}</td>
+                    <td>${window.escapeHtml(c.display_name || (window.formatClassroomName ? window.formatClassroomName(mk.nama_mk, c.nama_kelas) : c.nama_kelas))}</td>
                     <td>${window.escapeHtml(dsn)}</td>
                     <td>${window.escapeHtml(c.semester_tahun)}</td>
                     <td><span class="status-badge ${enrolled >= c.kuota_kelas ? "badge-danger" : "badge-success"}">${enrolled} / ${c.kuota_kelas}</span></td>

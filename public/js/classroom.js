@@ -67,9 +67,17 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!rawClass && !rawMk) return "-";
         if (!rawClass) return rawMk;
         if (!rawMk) return rawClass;
-        if (rawClass.toLowerCase().includes(rawMk.toLowerCase())) return rawClass;
-        if (rawClass.startsWith("(") && rawClass.endsWith(")")) return `${rawMk} ${rawClass}`;
-        return `${rawMk} (${rawClass})`;
+        const peeled = rawClass.replace(/^(.+?)\s*\((.+)\)\s*$/, function (_, left, inner) {
+            left = left.trim();
+            inner = inner.trim();
+            return left && inner.toLowerCase().startsWith(left.toLowerCase()) ? inner : rawClass;
+        });
+        if (peeled.toLowerCase().startsWith(rawMk.toLowerCase())) return peeled;
+        if (/^\(?[A-Za-z0-9]{1,3}\)?$/.test(peeled)) {
+            const token = peeled.replace(/[()]/g, "");
+            return `${rawMk} (${token.toUpperCase()})`;
+        }
+        return `${rawMk} (${peeled})`;
     }
 
     document.addEventListener("click", function (e) {
@@ -155,7 +163,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         courseListContainer.innerHTML = classroomsData.map(function (c, idx) {
             const isActive = idx === 0;
             const mkName = c.mata_kuliah?.nama_mk || "";
-            const displayName = getCourseDisplayName(mkName, c.nama_kelas);
+            const displayName = c.display_name || getCourseDisplayName(mkName, c.nama_kelas);
             const sks = c.mata_kuliah?.sks || 3;
 
             return `

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Classroom;
 use App\Models\Krs;
 use App\Models\PengumpulanTugas;
 use App\Models\TugasKelas;
@@ -82,14 +83,19 @@ class AcademicApiTest extends TestCase
         $detailResponse->assertStatus(200)
             ->assertJsonPath('classroom.kelas_id', 'CLS_SO_B')
             ->assertJsonPath('classroom.nama_kelas', 'Sistem Operasi (B)')
-            ->assertJsonStructure([
-                'classroom' => [
-                    'mata_kuliah',
-                    'dosen',
-                    'pengumuman',
-                    'bagian_kelas',
-                ],
-            ]);
+            ->assertJsonPath('classroom.display_name', 'Sistem Operasi (B)');
+        $this->assertSame(
+            'Struktur Data dan Algoritma (A)',
+            Classroom::formatName('Struktur Data dan Algoritma', 'Struktur Data dan Algoritma (Struktur Data dan Algoritma (A))')
+        );
+        $detailResponse->assertJsonStructure([
+            'classroom' => [
+                'mata_kuliah',
+                'dosen',
+                'pengumuman',
+                'bagian_kelas',
+            ],
+        ]);
     }
 
     public function test_student_can_view_and_submit_task(): void

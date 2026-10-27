@@ -284,7 +284,7 @@ class KrsController extends Controller
             $pdf->rect(50, $y, 495, 22);
             $pdf->text(58, $y + 15, (string) $mk?->kode_mk, 9);
             $pdf->text(130, $y + 15, mb_strimwidth((string) $mk?->nama_mk, 0, 48, '...'), 9);
-            $pdf->text(380, $y + 15, mb_strimwidth((string) $d->classroom?->nama_kelas, 0, 24, '...'), 9);
+            $pdf->text(380, $y + 15, mb_strimwidth(Classroom::sectionLabel((string) $mk?->nama_mk, (string) $d->classroom?->nama_kelas), 0, 24, '...'), 9);
             $pdf->text(515, $y + 15, (string) ($mk?->sks ?? 0), 9);
             $y += 22;
         }

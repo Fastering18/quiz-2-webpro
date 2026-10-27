@@ -113,7 +113,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             <div class="krs-table-row">
                 <div class="col-kode">${window.escapeHtml(mk.kode_mk || "-")}</div>
                 <div class="col-nama">${window.escapeHtml(mk.nama_mk || "-")}</div>
-                <div class="col-kelas">${window.escapeHtml(cls.nama_kelas || "-")}</div>
+                <div class="col-kelas">${window.escapeHtml(window.classroomSectionLabel ? window.classroomSectionLabel(mk.nama_mk, cls.nama_kelas) : (cls.nama_kelas || "-"))}</div>
                 <div class="col-sks">${mk.sks || 0}</div>
             </div>`;
         }).join("");
@@ -209,7 +209,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const isChecked = !alreadyTaken && selectedKelasIds.has(c.kelas_id) ? "checked" : "";
                 const sks = mk.sks || 3;
 
-                const displayName = window.formatClassroomName ? window.formatClassroomName(mk.nama_mk, c.nama_kelas) : (c.nama_kelas || mk.nama_mk);
+                const displayName = c.display_name || (window.formatClassroomName ? window.formatClassroomName(mk.nama_mk, c.nama_kelas) : (c.nama_kelas || mk.nama_mk));
 
                 return `
                 <label class="classroom-checkbox-item" style="${alreadyTaken ? "opacity:0.65;" : ""}">

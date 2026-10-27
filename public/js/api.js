@@ -101,25 +101,46 @@
         return null;
     }
 
+    function peelRepeatedTitle(value) {
+        let current = String(value || "").replace(/\s+/g, " ").trim();
+        for (let i = 0; i < 4; i++) {
+            const match = current.match(/^(.+?)\s*\((.+)\)\s*$/);
+            if (!match) return current;
+            const left = match[1].trim();
+            const inner = match[2].trim();
+            if (left && inner.toLowerCase().startsWith(left.toLowerCase())) {
+                current = inner;
+                continue;
+            }
+            return current;
+        }
+        return current;
+    }
+
     function formatClassroomName(mkName, namaKelas) {
-        const rawClass = (namaKelas || "").trim();
-        const rawMk = (mkName || "").trim();
+        const rawMk = String(mkName || "").replace(/\s+/g, " ").trim();
+        const rawClass = peelRepeatedTitle(namaKelas);
 
         if (!rawClass && !rawMk) return "-";
         if (!rawClass) return rawMk;
         if (!rawMk) return rawClass;
+        if (rawClass.toLowerCase() === rawMk.toLowerCase()) return rawMk;
+        if (rawClass.toLowerCase().startsWith(rawMk.toLowerCase())) return rawClass;
 
-        // If namaKelas already includes or equals the course name (e.g. "Struktur Data dan Algoritma (A)")
-        if (rawClass.toLowerCase().includes(rawMk.toLowerCase())) {
-            return rawClass;
+        const section = rawClass.match(/^\(?([A-Za-z0-9]{1,3})\)?$/);
+        if (section) return rawMk + " (" + section[1].toUpperCase() + ")";
+
+        return rawMk + " (" + rawClass + ")";
+    }
+
+    function classroomSectionLabel(mkName, namaKelas) {
+        const full = formatClassroomName(mkName, namaKelas);
+        const rawMk = String(mkName || "").replace(/\s+/g, " ").trim();
+        if (rawMk && full.toLowerCase().startsWith(rawMk.toLowerCase())) {
+            const rest = full.slice(rawMk.length).trim();
+            return rest || "-";
         }
-
-        // If namaKelas is like "(A)" or "A"
-        if (rawClass.startsWith("(") && rawClass.endsWith(")")) {
-            return `${rawMk} ${rawClass}`;
-        }
-
-        return `${rawMk} (${rawClass})`;
+        return full;
     }
 
     window.apiFetch = apiFetch;
@@ -129,6 +150,7 @@
     window.formatFileSize = formatFileSize;
     window.formatDate = formatDate;
     window.formatClassroomName = formatClassroomName;
+    window.classroomSectionLabel = classroomSectionLabel;
     window.getCsrfToken = getCsrfToken;
 
 })(window);
