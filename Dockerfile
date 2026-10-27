@@ -2,7 +2,7 @@
 # FrankenPHP 1.13 with PHP 8.5 includes the patched PHP build (PHP2Shell).
 FROM dunglas/frankenphp:1.13-php8.5
 
-RUN install-php-extensions pdo_pgsql zip bcmath opcache
+RUN install-php-extensions pcntl pdo_pgsql zip bcmath opcache
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
