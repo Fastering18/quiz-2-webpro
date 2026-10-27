@@ -101,12 +101,34 @@
         return null;
     }
 
+    function formatClassroomName(mkName, namaKelas) {
+        const rawClass = (namaKelas || "").trim();
+        const rawMk = (mkName || "").trim();
+
+        if (!rawClass && !rawMk) return "-";
+        if (!rawClass) return rawMk;
+        if (!rawMk) return rawClass;
+
+        // If namaKelas already includes or equals the course name (e.g. "Struktur Data dan Algoritma (A)")
+        if (rawClass.toLowerCase().includes(rawMk.toLowerCase())) {
+            return rawClass;
+        }
+
+        // If namaKelas is like "(A)" or "A"
+        if (rawClass.startsWith("(") && rawClass.endsWith(")")) {
+            return `${rawMk} ${rawClass}`;
+        }
+
+        return `${rawMk} (${rawClass})`;
+    }
+
     window.apiFetch = apiFetch;
     window.escapeHtml = escapeHtml;
     window.fileHref = fileHref;
     window.currentAuthUser = currentAuthUser;
     window.formatFileSize = formatFileSize;
     window.formatDate = formatDate;
+    window.formatClassroomName = formatClassroomName;
     window.getCsrfToken = getCsrfToken;
 
 })(window);

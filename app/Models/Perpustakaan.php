@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\FileStorage;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -49,6 +50,19 @@ class Perpustakaan extends Model
     public function publisher(): BelongsTo
     {
         return $this->belongsTo(User::class, 'publisher_id', 'user_id');
+    }
+
+    /**
+     * Case-insensitive title or author match. PostgreSQL LIKE is case-sensitive.
+     */
+    public function scopeSearch(Builder $query, string $term): Builder
+    {
+        $needle = '%'.mb_strtolower($term).'%';
+
+        return $query->where(function (Builder $inner) use ($needle) {
+            $inner->whereRaw('LOWER(judul_buku) LIKE ?', [$needle])
+                ->orWhereRaw('LOWER(penulis) LIKE ?', [$needle]);
+        });
     }
 
     public function getFileUrlAttribute(): ?string

@@ -7,6 +7,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Stores user uploads on the S3-compatible disk (Neon object storage) with structured keys.
@@ -108,12 +109,17 @@ class FileStorage
     public function store(UploadedFile $file, string $prefix): string
     {
         $key = trim($prefix, '/').'/'.Str::lower(Str::random(10)).'-'.$this->safeName($file->getClientOriginalName());
-
-        Storage::disk($this->disk())->putFileAs(
+        $stored = Storage::disk($this->disk())->putFileAs(
             trim($prefix, '/'),
             $file,
             basename($key),
         );
+
+        if ($stored === false) {
+            throw ValidationException::withMessages([
+                'file' => ['Gagal menyimpan berkas. Coba lagi.'],
+            ]);
+        }
 
         return $key;
     }

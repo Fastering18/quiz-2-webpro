@@ -19,7 +19,7 @@ class PerpustakaanController extends Controller
 
         if ($q = $request->query('q')) {
             $query->where(function ($w) use ($q) {
-                $w->where('judul_buku', 'like', "%{$q}%")->orWhere('penulis', 'like', "%{$q}%");
+                $w->search($q);
             });
         }
 

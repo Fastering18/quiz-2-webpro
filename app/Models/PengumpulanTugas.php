@@ -26,6 +26,7 @@ class PengumpulanTugas extends Model
         'file_jawaban_key',
         'ukuran_file',
         'komentar',
+        'komentar_dosen',
         'tanggal_kirim',
         'nilai_tugas',
         'terlambat',

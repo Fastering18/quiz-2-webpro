@@ -13,6 +13,21 @@ document.addEventListener("DOMContentLoaded", async function () {
         } catch (e) {}
     }
 
+    let studentKrsList = Array.isArray(window.__INITIAL_DATA__?.krs_list) ? window.__INITIAL_DATA__.krs_list : [];
+
+    function takenCourseCodes(exceptSemester) {
+        const codes = new Set();
+        studentKrsList.forEach(function (krs) {
+            if (krs.status_acc === "Ditolak") return;
+            if (exceptSemester && krs.semester_tahun === exceptSemester && krs.status_acc !== "Disetujui") return;
+            (krs.detail_krs || []).forEach(function (detail) {
+                const code = detail.classroom?.kode_mk;
+                if (code) codes.add(code);
+            });
+        });
+        return codes;
+    }
+
     const isDosen = currentUser?.role === "dosen";
     const isAdmin = currentUser?.role === "admin";
     const isMahasiswa = currentUser?.role === "mahasiswa";
@@ -184,24 +199,31 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         function renderClassroomCheckboxes() {
             const container = document.getElementById("krsAvailableClassrooms");
+            const exceptSemester = document.getElementById("inputKrsSemesterTahun")?.value.trim() || "";
+            const taken = takenCourseCodes(exceptSemester);
             container.innerHTML = availableClasses.map(c => {
                 const mk = c.mata_kuliah || {};
                 const dsn = c.dosen?.user?.nama_lengkap || c.nip || "Dosen Pengampu";
-                const isChecked = selectedKelasIds.has(c.kelas_id) ? "checked" : "";
+                const alreadyTaken = taken.has(c.kode_mk);
+                if (alreadyTaken) selectedKelasIds.delete(c.kelas_id);
+                const isChecked = !alreadyTaken && selectedKelasIds.has(c.kelas_id) ? "checked" : "";
                 const sks = mk.sks || 3;
 
+                const displayName = window.formatClassroomName ? window.formatClassroomName(mk.nama_mk, c.nama_kelas) : (c.nama_kelas || mk.nama_mk);
+
                 return `
-                <label class="classroom-checkbox-item">
-                    <input type="checkbox" class="cb-kelas" value="${window.escapeHtml(c.kelas_id)}" data-sks="${sks}" ${isChecked}>
+                <label class="classroom-checkbox-item" style="${alreadyTaken ? "opacity:0.65;" : ""}">
+                    <input type="checkbox" class="cb-kelas" value="${window.escapeHtml(c.kelas_id)}" data-sks="${sks}" ${isChecked} ${alreadyTaken ? "disabled" : ""}>
                     <div style="flex:1;">
                         <div style="font-weight:600; color:#0F172A; font-size:13px;">
-                            ${window.escapeHtml(mk.nama_mk || c.nama_kelas)} (${window.escapeHtml(c.nama_kelas)})
+                            ${window.escapeHtml(displayName)}
                         </div>
                         <div style="font-size:12px; color:#64748B;">
                             Kode: ${window.escapeHtml(c.kode_mk)} • Pengampu: ${window.escapeHtml(dsn)}
+                            ${alreadyTaken ? " • Sudah diambil" : ""}
                         </div>
                     </div>
-                    <span class="status-badge badge-info" style="font-weight:700;">${sks} SKS</span>
+                    <span class="status-badge ${alreadyTaken ? "badge-warning" : "badge-info"}" style="font-weight:700;">${alreadyTaken ? "Sudah diambil" : sks + " SKS"}</span>
                 </label>`;
             }).join("");
 
@@ -438,6 +460,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 res = await window.apiFetch("/api/krs");
             }
             const krsList = res?.krs_list || [];
+            studentKrsList = krsList;
 
             if (krsList.length === 0) {
                 renderKrsPreview(null, 0);

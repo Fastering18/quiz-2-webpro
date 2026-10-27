@@ -43,18 +43,24 @@ class FileController extends Controller
             return response()->json(['message' => 'Akses ditolak.'], 403);
         }
 
-        if (! $key || ! $this->files->exists($key)) {
+        try {
+            $present = $key && $this->files->exists($key);
+        } catch (\Throwable) {
+            $present = false;
+        }
+
+        if (! $present) {
             return response()->json(['message' => 'File belum tersedia.'], 404);
         }
 
         $expires = now()->addMinutes(FileStorage::URL_TTL_MINUTES);
         $url = $this->files->temporaryUrl($key, $kind === 'avatars' ? null : $name, $expires);
 
-        if (! $url) {
-            return response()->json(['message' => 'Gagal membuat tautan unduhan.'], 500);
-        }
-
         if ($request->wantsJson()) {
+            if (! $url) {
+                return response()->json(['message' => 'Gagal membuat tautan unduhan.'], 500);
+            }
+
             return response()->json([
                 'url' => $url,
                 'nama_file' => $name,
@@ -62,7 +68,15 @@ class FileController extends Controller
             ]);
         }
 
-        return redirect()->away($url);
+        $downloadName = $name ?: basename((string) $key);
+
+        if ($kind === 'avatars') {
+            return Storage::disk($this->files->disk())->response($key, $downloadName, [
+                'Content-Disposition' => 'inline; filename="'.$downloadName.'"',
+            ]);
+        }
+
+        return Storage::disk($this->files->disk())->download($key, $downloadName);
     }
 
     /** Signed streaming endpoint used only when S3 is not configured. */

@@ -105,8 +105,8 @@ class FileUploadTest extends TestCase
         $this->getJson('/api/files/materials/'.$id)->assertStatus(200)
             ->assertJsonStructure(['url', 'nama_file', 'expires_at'])
             ->assertJsonPath('nama_file', 'Slide Bab 1.pdf');
-        // plain request -> redirect
-        $this->get('/api/files/materials/'.$id)->assertRedirectContains('https://s3.test/'.$key);
+        // plain request streams the file from storage
+        $this->get('/api/files/materials/'.$id)->assertOk()->assertDownload('Slide Bab 1.pdf');
 
         // classroom view includes file_url for materials
         $this->getJson('/api/classrooms/CLS_SO_B')->assertStatus(200)
@@ -183,6 +183,7 @@ class FileUploadTest extends TestCase
         $task = TugasKelas::orderBy('tugas_id')->first(); // zip,pdf,c
         $task->update(['tenggat_waktu' => now()->addDays(3)]);
         $student = $this->student();
+        PengumpulanTugas::query()->where('tugas_id', $task->tugas_id)->where('nrp', $student->mahasiswa->nrp)->delete();
         Sanctum::actingAs($student);
         $h = ['Accept' => 'application/json'];
 
@@ -196,21 +197,17 @@ class FileUploadTest extends TestCase
         Storage::disk('s3')->assertExists($key1);
         $first->assertJsonPath('submission.terlambat', false);
 
-        // replacement deletes the old object
-        $second = $this->post('/api/tasks/'.$task->tugas_id.'/submit', [
+        $this->post('/api/tasks/'.$task->tugas_id.'/submit', [
             'file' => $this->pdf('laporan.pdf'),
-        ], $h)->assertStatus(200);
-        $key2 = $second->json('submission.file_jawaban_key');
-        $this->assertNotSame($key1, $key2);
-        Storage::disk('s3')->assertMissing($key1);
-        Storage::disk('s3')->assertExists($key2);
+        ], $h)->assertStatus(409);
+        Storage::disk('s3')->assertExists($key1);
         $this->assertSame(1, PengumpulanTugas::where('tugas_id', $task->tugas_id)->where('nrp', $student->mahasiswa->nrp)->count());
 
-        $id = $second->json('submission.submit_id');
+        $id = $first->json('submission.submit_id');
         $this->getJson('/api/files/submissions/'.$id)->assertStatus(200)->assertJsonStructure(['url']);
 
         // task view shows file_url on my submission
-        $this->getJson('/api/tasks/'.$task->tugas_id)->assertJsonPath('my_submission.file_url', fn ($v) => str_contains((string) $v, $key2));
+        $this->getJson('/api/tasks/'.$task->tugas_id)->assertJsonPath('my_submission.file_url', fn ($v) => str_contains((string) $v, $key1));
 
         // other student cannot download; dosen of class and admin can; other dosen cannot
         Sanctum::actingAs($this->outsider());
@@ -233,7 +230,9 @@ class FileUploadTest extends TestCase
         $this->post('/api/tasks/'.$task->tugas_id.'/submit', ['file' => $this->pdf()], $h)->assertStatus(403);
         $this->getJson('/api/tasks/'.$task->tugas_id)->assertStatus(403);
 
-        Sanctum::actingAs($this->student());
+        $student = $this->student();
+        PengumpulanTugas::query()->where('tugas_id', $task->tugas_id)->where('nrp', $student->mahasiswa->nrp)->delete();
+        Sanctum::actingAs($student);
 
         // format restricted to the task's format_file (zip,pdf)
         $this->post('/api/tasks/'.$task->tugas_id.'/submit', [
@@ -246,8 +245,10 @@ class FileUploadTest extends TestCase
 
         // past deadline -> flagged late (still accepted)
         $task->update(['tenggat_waktu' => now()->subDays(2)]);
-        $this->post('/api/tasks/'.$task->tugas_id.'/submit', ['file' => $this->pdf('telat.pdf')], $h)
+        $late = $this->post('/api/tasks/'.$task->tugas_id.'/submit', ['file' => $this->pdf('telat.pdf')], $h)
             ->assertStatus(200)->assertJsonPath('submission.terlambat', true);
+
+        PengumpulanTugas::query()->where('submit_id', $late->json('submission.submit_id'))->delete();
 
         // date-only deadline today is still on time
         $task->update(['tenggat_waktu' => now()->startOfDay()]);
@@ -281,7 +282,8 @@ class FileUploadTest extends TestCase
         Sanctum::actingAs($this->student());
         $this->getJson('/api/files/library/'.$id)->assertStatus(200)->assertJsonStructure(['url']);
         $this->actingAs($this->student())->get('/files/library/'.$id)
-            ->assertRedirect('https://s3.test/'.$key.'?X-Amz-Signature=sig');
+            ->assertOk()
+            ->assertDownload('Buku Nyata.pdf');
         $this->getJson('/api/library')->assertJsonStructure(['books' => ['data' => [['file_url']]]]);
 
         // admin replaces the file (multipart POST) -> old object removed

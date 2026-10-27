@@ -25,7 +25,7 @@ class OperationsApiTest extends TestCase
         $student = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
         Sanctum::actingAs($student);
 
-        $response = $this->getJson('/api/library?search=Operating');
+        $response = $this->getJson('/api/library?search=operating');
 
         $response->assertStatus(200)
             ->assertJsonStructure([

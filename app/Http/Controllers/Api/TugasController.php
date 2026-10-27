@@ -47,7 +47,7 @@ class TugasController extends Controller
     }
 
     /**
-     * Submit or re-submit an assignment for the task.
+     * Submit an assignment once. A finished submission cannot be replaced.
      */
     public function submit(Request $request, string|int $tugasId, FileStorage $files): JsonResponse
     {
@@ -87,6 +87,11 @@ class TugasController extends Controller
         ]);
 
         $existing = PengumpulanTugas::where('tugas_id', $task->tugas_id)->where('nrp', $mahasiswa->nrp)->first();
+        if ($existing) {
+            return response()->json([
+                'message' => 'Tugas ini sudah dikumpulkan dan tidak dapat diunggah lagi.',
+            ], 409);
+        }
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
@@ -106,25 +111,16 @@ class TugasController extends Controller
             $deadline = $deadline->copy()->endOfDay();
         }
 
-        $submission = PengumpulanTugas::updateOrCreate(
-            [
-                'tugas_id' => $task->tugas_id,
-                'nrp' => $mahasiswa->nrp,
-            ],
-            [
-                'nama_file' => $namaFile,
-                'file_jawaban_key' => $fileKey,
-                'ukuran_file' => $ukuranFile,
-                'komentar' => $validated['komentar'] ?? null,
-                'tanggal_kirim' => $now,
-                'terlambat' => $deadline !== null && $now->gt($deadline),
-            ]
-        );
-
-        // replacing a submission removes the previous object
-        if ($existing && $existing->file_jawaban_key !== $fileKey) {
-            $files->delete($existing->file_jawaban_key);
-        }
+        $submission = PengumpulanTugas::create([
+            'tugas_id' => $task->tugas_id,
+            'nrp' => $mahasiswa->nrp,
+            'nama_file' => $namaFile,
+            'file_jawaban_key' => $fileKey,
+            'ukuran_file' => $ukuranFile,
+            'komentar' => $validated['komentar'] ?? null,
+            'tanggal_kirim' => $now,
+            'terlambat' => $deadline !== null && $now->gt($deadline),
+        ]);
 
         return response()->json([
             'message' => 'Tugas berhasil dikumpulkan.',
@@ -179,12 +175,12 @@ class TugasController extends Controller
 
         $validated = $request->validate([
             'nilai_tugas' => ['required', 'integer', 'min:0', 'max:100'],
-            'komentar' => ['nullable', 'string', 'max:1000'],
+            'komentar_dosen' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $submission->update([
             'nilai_tugas' => $validated['nilai_tugas'],
-            'komentar' => $validated['komentar'] ?? $submission->komentar,
+            'komentar_dosen' => $validated['komentar_dosen'] ?? $submission->komentar_dosen,
         ]);
 
         return response()->json([

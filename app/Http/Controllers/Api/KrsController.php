@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class KrsController extends Controller
 {
@@ -115,6 +116,24 @@ class KrsController extends Controller
             ], 409);
         }
 
+        $classes = Classroom::query()->whereIn('kelas_id', $validated['kelas_ids'])->get();
+        if ($classes->countBy('kode_mk')->contains(fn (int $count) => $count > 1)) {
+            throw ValidationException::withMessages([
+                'kelas_ids' => ['Satu mata kuliah hanya dapat dipilih satu kali.'],
+            ]);
+        }
+
+        $lockedCodes = $this->lockedCourseCodes(
+            $mahasiswa->nrp,
+            $existing?->status_acc === 'Menunggu' ? $existing->krs_id : null,
+        );
+        $alreadyTaken = $classes->filter(fn (Classroom $class) => in_array($class->kode_mk, $lockedCodes, true))->unique('kode_mk');
+        if ($alreadyTaken->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'kelas_ids' => ['Mata kuliah sudah diambil dan tidak dapat diajukan lagi: '.$alreadyTaken->pluck('kode_mk')->implode(', ').'.'],
+            ]);
+        }
+
         $krsId = 'KRS_'.str_replace('/', '', $validated['semester_tahun']).'_'.$mahasiswa->nrp;
 
         $krs = DB::transaction(function () use ($krsId, $mahasiswa, $validated) {
@@ -149,6 +168,30 @@ class KrsController extends Controller
             'message' => 'KRS berhasil diajukan dan menunggu persetujuan Dosen Wali.',
             'krs' => $krs->load(['detailKrs.classroom.mataKuliah', 'detailKrs.classroom.dosen.user']),
         ], 201);
+    }
+
+    /**
+     * Course codes already on a KRS that was not rejected.
+     * The KRS currently being edited (still Menunggu) is excluded so its own classes can stay.
+     *
+     * @return list<string>
+     */
+    private function lockedCourseCodes(string $nrp, ?string $exceptKrsId): array
+    {
+        return DetailKrs::query()
+            ->whereHas('krs', function ($query) use ($nrp, $exceptKrsId) {
+                $query->where('nrp', $nrp)->where('status_acc', '!=', 'Ditolak');
+                if ($exceptKrsId) {
+                    $query->where('krs_id', '!=', $exceptKrsId);
+                }
+            })
+            ->with('classroom:kelas_id,kode_mk')
+            ->get()
+            ->map(fn (DetailKrs $detail) => $detail->classroom?->kode_mk)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**

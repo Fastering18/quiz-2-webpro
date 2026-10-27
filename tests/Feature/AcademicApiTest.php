@@ -103,6 +103,8 @@ class AcademicApiTest extends TestCase
         $showResponse->assertStatus(200)
             ->assertJsonPath('task.tugas_id', $task->tugas_id);
 
+        PengumpulanTugas::query()->where('tugas_id', $task->tugas_id)->where('nrp', $student->mahasiswa->nrp)->delete();
+
         $submitResponse = $this->postJson('/api/tasks/'.$task->tugas_id.'/submit', [
             'nama_file' => 'revisi_tugas.zip',
             'file_jawaban_key' => 'submissions/test_revisi.zip',
@@ -125,18 +127,23 @@ class AcademicApiTest extends TestCase
         Sanctum::actingAs($dosen);
 
         $submission = PengumpulanTugas::orderBy('submit_id')->first();
+        $catatanMahasiswa = $submission->komentar;
 
         $response = $this->postJson('/api/submissions/'.$submission->submit_id.'/grade', [
             'nilai_tugas' => 98,
-            'komentar' => 'Sangat bagus dan komprehensif.',
+            'komentar_dosen' => 'Sangat bagus dan komprehensif.',
         ]);
 
         $response->assertStatus(200)
-            ->assertJsonPath('submission.nilai_tugas', 98);
+            ->assertJsonPath('submission.nilai_tugas', 98)
+            ->assertJsonPath('submission.komentar', $catatanMahasiswa)
+            ->assertJsonPath('submission.komentar_dosen', 'Sangat bagus dan komprehensif.');
 
         $this->assertDatabaseHas('pengumpulan_tugas', [
             'submit_id' => $submission->submit_id,
             'nilai_tugas' => 98,
+            'komentar' => $catatanMahasiswa,
+            'komentar_dosen' => 'Sangat bagus dan komprehensif.',
         ]);
     }
 
@@ -155,11 +162,17 @@ class AcademicApiTest extends TestCase
             ->assertJsonPath('krs.krs_id', $krs->krs_id)
             ->assertJsonPath('total_sks', 13);
 
-        // Submit next semester KRS
-        $submitResponse = $this->postJson('/api/krs', [
+        // A course already on an approved KRS cannot be proposed again.
+        $this->postJson('/api/krs', [
             'semester' => 4,
             'semester_tahun' => '2026/Genap',
             'kelas_ids' => ['CLS_SO_B', 'CLS_PBO_A'],
+        ])->assertStatus(422)->assertJsonValidationErrors('kelas_ids');
+
+        $submitResponse = $this->postJson('/api/krs', [
+            'semester' => 4,
+            'semester_tahun' => '2026/Genap',
+            'kelas_ids' => ['CLS_SDA_A'],
         ]);
 
         $submitResponse->assertStatus(201)

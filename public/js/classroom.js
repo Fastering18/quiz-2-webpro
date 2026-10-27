@@ -58,6 +58,20 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (m) m.classList.remove("is-open");
     }
 
+    function getCourseDisplayName(mkName, namaKelas) {
+        if (typeof window.formatClassroomName === "function") {
+            return window.formatClassroomName(mkName, namaKelas);
+        }
+        const rawClass = (namaKelas || "").trim();
+        const rawMk = (mkName || "").trim();
+        if (!rawClass && !rawMk) return "-";
+        if (!rawClass) return rawMk;
+        if (!rawMk) return rawClass;
+        if (rawClass.toLowerCase().includes(rawMk.toLowerCase())) return rawClass;
+        if (rawClass.startsWith("(") && rawClass.endsWith(")")) return `${rawMk} ${rawClass}`;
+        return `${rawMk} (${rawClass})`;
+    }
+
     document.addEventListener("click", function (e) {
         const closeBtn = e.target.closest("[data-close-modal]");
         if (closeBtn) closeModal(closeBtn.dataset.closeModal);
@@ -140,7 +154,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         courseListContainer.innerHTML = classroomsData.map(function (c, idx) {
             const isActive = idx === 0;
-            const mkName = c.mata_kuliah?.nama_mk || c.nama_kelas;
+            const mkName = c.mata_kuliah?.nama_mk || "";
+            const displayName = getCourseDisplayName(mkName, c.nama_kelas);
             const sks = c.mata_kuliah?.sks || 3;
 
             return `
@@ -148,7 +163,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <button class="course-toggle" type="button" aria-expanded="${isActive}">
                     <span class="course-icon" aria-hidden="true">${bookIcon}</span>
                     <span class="course-copy">
-                        <span class="course-name">${window.escapeHtml(mkName)} (${window.escapeHtml(c.nama_kelas)})</span>
+                        <span class="course-name">${window.escapeHtml(displayName)}</span>
                         <span class="course-sks">${sks} SKS</span>
                     </span>
                     <svg class="course-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
@@ -239,7 +254,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const sec = getActiveSection();
         const mk = currentDetail.mata_kuliah || {};
         const sks = mk.sks || 3;
-        const courseTitle = `${mk.nama_mk || currentDetail.nama_kelas} (${currentDetail.nama_kelas})`;
+        const courseTitle = getCourseDisplayName(mk.nama_mk, currentDetail.nama_kelas);
 
         if (lessonEyebrow) lessonEyebrow.textContent = sec ? `Bagian ${sec.urutan}` : "Kelas Perkuliahan";
         if (lessonTitle)   lessonTitle.textContent   = sec ? sec.judul_bagian : courseTitle;
@@ -520,13 +535,22 @@ document.addEventListener("DOMContentLoaded", async function () {
                                 Berkas: <strong>${window.escapeHtml(mySub.nama_file)}</strong> (${window.formatFileSize(mySub.ukuran_file)})
                                 ${mySub.nilai_tugas !== null ? `<span style="margin-left:12px; padding:2px 8px; background:#166534; color:white; border-radius:4px; font-weight:bold;">Nilai: ${mySub.nilai_tugas}/100</span>` : "<span style='margin-left:12px; color:#64748B;'>Belum dinilai</span>"}
                             </div>
+                            ${mySub.komentar ? `<div style="margin-top:6px; font-size:13px; color:#14532D;">Catatan Anda: ${window.escapeHtml(mySub.komentar)}</div>` : ""}
+                            ${mySub.komentar_dosen ? `<div style="margin-top:6px; font-size:13px; color:#1E3A8A;">Komentar Dosen: ${window.escapeHtml(mySub.komentar_dosen)}</div>` : ""}
                         </div>
                     ` : ""}
                 </section>
 
+                ${mySub ? `
                 <section class="classroom-card">
                     <div class="classroom-card-heading">
-                        <div><h2>${mySub ? "Perbarui Kiriman Anda" : "Unggah Pekerjaan Anda"}</h2><p>Pilih file tugas yang akan dikumpulkan.</p></div>
+                        <div><h2>Kiriman terkunci</h2><p>Tugas yang sudah dikumpulkan tidak dapat diunggah lagi.</p></div>
+                    </div>
+                </section>
+                ` : `
+                <section class="classroom-card">
+                    <div class="classroom-card-heading">
+                        <div><h2>Unggah Pekerjaan Anda</h2><p>Pilih file tugas yang akan dikumpulkan.</p></div>
                     </div>
                     <form class="classroom-form" id="taskSubmitForm" novalidate>
                         <div class="classroom-field">
@@ -549,10 +573,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                         <p class="classroom-feedback" id="taskFeedback" role="status" aria-live="polite"></p>
                         <div class="classroom-form-actions">
                             <button type="button" class="classroom-button classroom-button-secondary" id="cancelTaskButton">Batal</button>
-                            <button type="submit" class="classroom-button classroom-button-primary" id="submitTaskButton">${mySub ? "Perbarui Kiriman" : "Kirim Tugas"}</button>
+                            <button type="submit" class="classroom-button classroom-button-primary" id="submitTaskButton">Kirim Tugas</button>
                         </div>
                     </form>
                 </section>
+                `}
             </div>`;
 
         wireStudentTaskForm();
@@ -592,6 +617,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                             <span style="font-size:11px; color:#64748B; margin-left:8px;">Dikirim: ${window.formatDate(sub.tanggal_kirim)}</span>
                         </div>
                         ${sub.komentar ? `<div style="margin-top:4px; color:#475569;"><em>Catatan Mahasiswa: "${window.escapeHtml(sub.komentar)}"</em></div>` : ""}
+                        ${sub.komentar_dosen ? `<div style="margin-top:4px; color:#1E3A8A;"><em>Komentar Dosen: "${window.escapeHtml(sub.komentar_dosen)}"</em></div>` : ""}
                     </div>
 
                     <hr class="divider" style="margin:12px 0;">
@@ -604,7 +630,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         </div>
                         <div style="flex:1; min-width:200px;">
                             <label style="font-size:12px; font-weight:600; display:block; margin-bottom:4px;">Komentar Dosen (Opsional)</label>
-                            <input type="text" class="form-input" style="padding:6px 10px;" id="input-komentar-${submitId}" value="${window.escapeHtml(sub.komentar || "")}" placeholder="Beri catatan evaluasi tugas...">
+                            <input type="text" class="form-input" style="padding:6px 10px;" id="input-komentar-${submitId}" value="${window.escapeHtml(sub.komentar_dosen || "")}" placeholder="Beri catatan evaluasi tugas...">
                         </div>
                         <button type="button" class="btn-primary-small btn-simpan-nilai" data-sub-id="${submitId}" style="padding:8px 16px;">
                             Simpan Nilai
@@ -739,7 +765,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         method: "POST",
                         body: JSON.stringify({
                             nilai_tugas: valNilai,
-                            komentar: inputKomentar?.value || null
+                            komentar_dosen: inputKomentar?.value || null
                         })
                     });
 
@@ -958,7 +984,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     // ==========================================
     function openAnnouncementView() {
         if (!currentDetail) return;
-        const courseTitle = `${currentDetail.mata_kuliah?.nama_mk || currentDetail.nama_kelas} (${currentDetail.nama_kelas})`;
+        const courseTitle = getCourseDisplayName(currentDetail.mata_kuliah?.nama_mk, currentDetail.nama_kelas);
 
         if (annEyebrow) annEyebrow.textContent = "Pengumuman Kelas";
         if (annTitle)   annTitle.textContent   = "Pengumuman — " + courseTitle;
