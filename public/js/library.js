@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         libraryTableBody.innerHTML = list.map(function (b, idx) {
-            const downloadUrl = b.buku_id ? window.fileHref("library", b.buku_id) : "#";
+            const downloadUrl = b.buku_id ? window.fileHref("library", b.buku_id) + (b.file_dokumen_key ? "?v=" + encodeURIComponent(b.file_dokumen_key) : "") : "#";
 
             const deleteBtnHtml = canManageBooks ? `
                 <button type="button" class="btn-action-small btn-action-danger btn-delete-buku" data-id="${b.buku_id}" data-title="${window.escapeHtml(b.judul_buku)}">

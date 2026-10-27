@@ -39,18 +39,8 @@ class FileController extends Controller
             default => abort(404, 'Jenis file tidak dikenal.'),
         };
 
-        if (! $allowed) {
-            return response()->json(['message' => 'Akses ditolak.'], 403);
-        }
-
-        try {
-            $present = $key && $this->files->exists($key);
-        } catch (\Throwable) {
-            $present = false;
-        }
-
-        if (! $present) {
-            return response()->json(['message' => 'File belum tersedia.'], 404);
+        if (! $allowed || $key === null || $key === '') {
+            return response()->json(['message' => $allowed ? 'File belum tersedia.' : 'Akses ditolak.'], $allowed ? 404 : 403);
         }
 
         $expires = now()->addMinutes(FileStorage::URL_TTL_MINUTES);
@@ -68,15 +58,56 @@ class FileController extends Controller
             ]);
         }
 
-        $downloadName = $name ?: basename((string) $key);
+        return $this->streamStoredFile($key, $name ?: basename($key), $kind === 'avatars');
+    }
 
-        if ($kind === 'avatars') {
-            return Storage::disk($this->files->disk())->response($key, $downloadName, [
-                'Content-Disposition' => 'inline; filename="'.$downloadName.'"',
-            ]);
+    /**
+     * Stream the object with GET. A HEAD probe against Neon can fail even when the object exists,
+     * and that probe was reported to the browser as "file belum tersedia".
+     */
+    private function streamStoredFile(string $key, string $downloadName, bool $inline): StreamedResponse|JsonResponse
+    {
+        $disk = Storage::disk($this->files->disk());
+
+        try {
+            $stream = $disk->readStream($key);
+        } catch (\Throwable $exception) {
+            error_log('File read failed for '.$key.': '.$exception->getMessage());
+
+            return response()->json(['message' => 'File belum tersedia.'], 404);
         }
 
-        return Storage::disk($this->files->disk())->download($key, $downloadName);
+        if (! is_resource($stream)) {
+            return response()->json(['message' => 'File belum tersedia.'], 404);
+        }
+
+        $safeName = str_replace(['"', '\\', "\r", "\n"], '', $downloadName);
+
+        return response()->stream(function () use ($stream) {
+            fpassthru($stream);
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }, 200, [
+            'Content-Type' => $this->mimeFromName($safeName),
+            'Content-Disposition' => ($inline ? 'inline' : 'attachment').'; filename="'.$safeName.'"',
+            'Cache-Control' => 'private, max-age=300',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    private function mimeFromName(string $name): string
+    {
+        return match (strtolower(pathinfo($name, PATHINFO_EXTENSION))) {
+            'pdf' => 'application/pdf',
+            'png' => 'image/png',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'webp' => 'image/webp',
+            'gif' => 'image/gif',
+            'txt', 'md' => 'text/plain',
+            'zip' => 'application/zip',
+            default => 'application/octet-stream',
+        };
     }
 
     /** Signed streaming endpoint used only when S3 is not configured. */

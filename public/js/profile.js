@@ -117,22 +117,19 @@ document.addEventListener("DOMContentLoaded", function () {
                     body: formData
                 });
 
-                if (res?.profile?.foto_profil_key) {
-                    const newUrl = "/files/avatars/" + encodeURIComponent(res.profile.user_id || "") + "?t=" + Date.now();
-                    const pageAvatar = document.getElementById("profile-page-avatar");
-                    const topAvatar  = document.getElementById("topbar-avatar");
-                    if (pageAvatar) pageAvatar.src = newUrl;
-                    if (topAvatar)  topAvatar.src  = newUrl;
-
-                    // Update cached user
+                if (res?.profile) {
+                    const profile = res.profile;
+                    window.__AUTH_USER__ = profile;
                     try {
-                        const raw = localStorage.getItem('user');
-                        if (raw) {
-                            const u = JSON.parse(raw);
-                            u.foto_profil_key = res.profile.foto_profil_key;
-                            localStorage.setItem('user', JSON.stringify(u));
-                        }
+                        profile._cachedAt = Date.now();
+                        localStorage.setItem("user", JSON.stringify(profile));
                     } catch (e) {}
+                    window.dispatchEvent(new CustomEvent("auth:user-updated", { detail: profile }));
+                    if (profile.foto_profil_key && profile.user_id) {
+                        const newUrl = "/files/avatars/" + encodeURIComponent(profile.user_id) + "?v=" + encodeURIComponent(profile.foto_profil_key);
+                        const pageAvatar = document.getElementById("profile-page-avatar");
+                        if (pageAvatar) pageAvatar.src = newUrl;
+                    }
                 }
 
                 if (profileFeedback) {

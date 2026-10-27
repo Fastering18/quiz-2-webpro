@@ -11,7 +11,7 @@ function escHtml(value) {
 
 function avatarSrc(user) {
     if (user?.user_id && user?.foto_profil_key) {
-        return "/files/avatars/" + encodeURIComponent(user.user_id);
+        return "/files/avatars/" + encodeURIComponent(user.user_id) + "?v=" + encodeURIComponent(user.foto_profil_key);
     }
     return DEFAULT_AVATAR;
 }
@@ -60,7 +60,7 @@ class MyTopbar extends HTMLElement {
                     </div>
                 </div>
 
-                <img id="topbar-avatar" class="user-avatar" src="${userAvatar}" alt="Avatar" width="32" height="32" style="background:#E2E8F0; object-fit:cover;">
+                <img id="topbar-avatar" class="user-avatar" src="${userAvatar}" alt="Avatar" width="32" height="32" style="background:#E2E8F0; object-fit:cover;" onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}'">
 
                 <button id="menuTrigger" class="btn-menu" aria-label="Buka menu">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"
@@ -113,6 +113,10 @@ class MyTopbar extends HTMLElement {
                 avatarEl.src = avatarSrc(u);
             }
         };
+
+        window.addEventListener('auth:user-updated', (event) => {
+            applyUser(event.detail);
+        });
 
         // If user was already provided by SSR window.__AUTH_USER__, skip /api/me fetch entirely
         if (!window.__AUTH_USER__) {
