@@ -2,7 +2,11 @@
 # FrankenPHP 1.13 with PHP 8.5 includes the patched PHP build (PHP2Shell).
 FROM dunglas/frankenphp:1.13-php8.5
 
-RUN install-php-extensions pcntl pdo_pgsql zip bcmath opcache
+# cap_net_bind_service on the binary makes Render refuse to exec it (exit 126).
+# Port 10000 does not need that capability.
+RUN install-php-extensions pcntl pdo_pgsql zip bcmath opcache \
+ && setcap -r /usr/local/bin/frankenphp \
+ && chmod +x /usr/local/bin/frankenphp
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
