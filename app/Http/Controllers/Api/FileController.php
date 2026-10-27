@@ -48,7 +48,7 @@ class FileController extends Controller
         }
 
         $expires = now()->addMinutes(FileStorage::URL_TTL_MINUTES);
-        $url = $this->files->temporaryUrl($key, $name, $expires);
+        $url = $this->files->temporaryUrl($key, $kind === 'avatars' ? null : $name, $expires);
 
         if (! $url) {
             return response()->json(['message' => 'Gagal membuat tautan unduhan.'], 500);

@@ -22,6 +22,8 @@ class WebRoutesTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Selamat datang di myITS Classroom');
+        $response->assertHeader('X-Content-Type-Options', 'nosniff');
+        $response->assertHeader('X-Frame-Options', 'SAMEORIGIN');
     }
 
     public function test_guest_is_redirected_to_login_from_protected_pages(): void
@@ -68,9 +70,18 @@ class WebRoutesTest extends TestCase
     {
         $user = User::where('role', 'mahasiswa')->orderBy('user_id')->first();
 
+        $user->createToken('browser');
+
         $response = $this->actingAs($user)->post('/logout');
         $response->assertRedirect(route('login'));
+        $response->assertHeader('Clear-Site-Data', '"cookies", "storage"');
         $this->assertGuest();
+        $this->assertSame(0, $user->tokens()->count());
+    }
+
+    public function test_guest_is_redirected_away_from_file_downloads(): void
+    {
+        $this->get('/files/library/BK_001')->assertRedirect('/');
     }
 
     public function test_user_can_logout_via_api(): void

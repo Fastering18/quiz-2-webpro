@@ -1,9 +1,14 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\StatsController as AdminStatsController;
+use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Api\ClassroomController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\FileController;
+use App\Http\Controllers\Api\KrsController;
+use App\Http\Controllers\Api\LaporanAdminController;
 use App\Http\Controllers\Api\PerpustakaanController;
+use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -32,7 +37,12 @@ Route::get('/sitemap.xml', function () {
     return response($xml, 200, ['Content-Type' => 'application/xml']);
 })->name('sitemap');
 
-Route::any('/logout', function (Request $request) {
+Route::post('/logout', function (Request $request) {
+    $user = $request->user();
+    if ($user) {
+        $user->tokens()->delete();
+    }
+
     Auth::guard('web')->logout();
 
     if ($request->hasSession()) {
@@ -40,11 +50,11 @@ Route::any('/logout', function (Request $request) {
         $request->session()->regenerateToken();
     }
 
-    if ($request->expectsJson()) {
-        return response()->json(['message' => 'Logout berhasil. Sesi telah diakhiri.']);
-    }
+    $response = $request->expectsJson()
+        ? response()->json(['message' => 'Logout berhasil. Sesi telah diakhiri.'])
+        : redirect()->route('login');
 
-    return redirect()->route('login');
+    return $response->header('Clear-Site-Data', '"cookies", "storage"');
 })->name('logout');
 
 Route::middleware('auth')->group(function () {
@@ -88,27 +98,51 @@ Route::middleware('auth')->group(function () {
         ]);
     })->name('library');
 
-    Route::get('/krs', function () {
+    Route::get('/krs', function (Request $request) {
         $authUser = Auth::user()?->loadMissing(['mahasiswa.dosenWali.user', 'dosen']);
 
-        return view('krs', ['authUser' => $authUser]);
+        return view('krs', [
+            'authUser' => $authUser,
+            'initialData' => app(KrsController::class)->index($request)->getData(true),
+        ]);
     })->name('krs');
 
-    Route::get('/lapor-admin', function () {
+    Route::get('/lapor-admin', function (Request $request) {
         $authUser = Auth::user()?->loadMissing(['mahasiswa.dosenWali.user', 'dosen']);
 
-        return view('lapor-admin', ['authUser' => $authUser]);
+        return view('lapor-admin', [
+            'authUser' => $authUser,
+            'initialData' => app(LaporanAdminController::class)->index($request)->getData(true),
+        ]);
     })->name('lapor-admin');
 
-    Route::get('/profile', function () {
+    Route::get('/profile', function (Request $request) {
         $authUser = Auth::user()?->loadMissing(['mahasiswa.dosenWali.user', 'dosen']);
 
-        return view('profile', ['authUser' => $authUser]);
+        return view('profile', [
+            'authUser' => $authUser,
+            'initialData' => app(ProfileController::class)->show($request)->getData(true),
+        ]);
     })->name('profile');
 
-    Route::get('/admin-panel', function () {
+    Route::get('/admin-panel', function (Request $request) {
         $authUser = Auth::user()?->loadMissing(['mahasiswa.dosenWali.user', 'dosen']);
+        $initialData = null;
 
-        return view('admin-panel', ['authUser' => $authUser]);
+        if ($authUser?->role === 'admin') {
+            $initialData = [
+                'stats' => app(AdminStatsController::class)->index()->getData(true)['stats'] ?? [],
+                'users' => app(AdminUserController::class)->index($request)->getData(true),
+            ];
+        }
+
+        return view('admin-panel', [
+            'authUser' => $authUser,
+            'initialData' => $initialData,
+        ]);
     })->name('admin-panel');
+
+    Route::get('/files/{kind}/{id}', [FileController::class, 'show'])
+        ->whereIn('kind', ['materials', 'submissions', 'library', 'reports', 'avatars'])
+        ->name('files.show');
 });

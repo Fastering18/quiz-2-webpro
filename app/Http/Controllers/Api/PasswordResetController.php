@@ -65,8 +65,11 @@ class PasswordResetController extends Controller
                 ));
             }
         } catch (\Throwable $e) {
-            // Never leak failures (SMTP down, etc.) to the client; response stays identical.
             Log::error('Forgot-password mail failed: '.$e->getMessage());
+
+            return response()->json([
+                'message' => 'Gagal mengirim email pemulihan. Coba lagi beberapa saat lagi.',
+            ], 503);
         }
 
         return response()->json(['message' => self::GENERIC_MESSAGE]);

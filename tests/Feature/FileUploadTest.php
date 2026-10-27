@@ -144,7 +144,7 @@ class FileUploadTest extends TestCase
         $url = '/api/sections/'.$section->bagian_id.'/materials';
         $h = ['Accept' => 'application/json'];
 
-        $this->post($url, ['judul_materi' => 'Besar', 'file' => $this->pdf('big.pdf', 10241)], $h)
+        $this->post($url, ['judul_materi' => 'Besar', 'file' => $this->pdf('big.pdf', 20481)], $h)
             ->assertStatus(422)->assertJsonValidationErrors(['file']);
 
         $this->post($url, ['judul_materi' => 'Exe', 'file' => UploadedFile::fake()->create('virus.exe', 10, 'application/x-msdownload')], $h)
@@ -241,7 +241,7 @@ class FileUploadTest extends TestCase
         ], $h)->assertStatus(422)->assertJsonValidationErrors(['file']);
 
         // too big
-        $this->post('/api/tasks/'.$task->tugas_id.'/submit', ['file' => $this->pdf('b.pdf', 10241)], $h)
+        $this->post('/api/tasks/'.$task->tugas_id.'/submit', ['file' => $this->pdf('b.pdf', 20481)], $h)
             ->assertStatus(422);
 
         // past deadline -> flagged late (still accepted)
@@ -280,6 +280,8 @@ class FileUploadTest extends TestCase
         // any authenticated user (student) can fetch the link
         Sanctum::actingAs($this->student());
         $this->getJson('/api/files/library/'.$id)->assertStatus(200)->assertJsonStructure(['url']);
+        $this->actingAs($this->student())->get('/files/library/'.$id)
+            ->assertRedirect('https://s3.test/'.$key.'?X-Amz-Signature=sig');
         $this->getJson('/api/library')->assertJsonStructure(['books' => ['data' => [['file_url']]]]);
 
         // admin replaces the file (multipart POST) -> old object removed
@@ -311,7 +313,7 @@ class FileUploadTest extends TestCase
 
         $this->post('/api/library', ['judul_buku' => 'x', 'penulis' => 'y', 'kategori' => 'z', 'file' => UploadedFile::fake()->create('a.exe', 5)], $h)
             ->assertStatus(422)->assertJsonValidationErrors(['file']);
-        $this->post('/api/library', ['judul_buku' => 'x', 'penulis' => 'y', 'kategori' => 'z', 'file' => $this->pdf('big.pdf', 10241)], $h)
+        $this->post('/api/library', ['judul_buku' => 'x', 'penulis' => 'y', 'kategori' => 'z', 'file' => $this->pdf('big.pdf', 51201)], $h)
             ->assertStatus(422)->assertJsonValidationErrors(['file']);
     }
 

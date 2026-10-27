@@ -70,10 +70,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     // 1. Identify Role
-    try {
-        const raw = localStorage.getItem("user");
-        if (raw) currentUser = JSON.parse(raw);
-    } catch (e) {}
+    currentUser = window.currentAuthUser ? window.currentAuthUser() : null;
 
     if (!currentUser) {
         try {
@@ -294,7 +291,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 </span>
                 <span class="file-type-badge">${fileType}</span>
                 <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
-                    ${m.file_materi_key ? `<a href="/storage/${m.file_materi_key}" download="${window.escapeHtml(m.nama_file)}" class="btn-primary-small" style="text-decoration:none; padding:6px 12px; font-size:12px;">Unduh</a>` : ""}
+                    ${m.materi_id && m.file_materi_key ? `<a href="${window.fileHref("materials", m.materi_id)}" class="btn-primary-small" style="text-decoration:none; padding:6px 12px; font-size:12px;">Unduh</a>` : ""}
                     ${manageMaterialHtml}
                 </div>
             </div>`;
@@ -589,7 +586,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <div style="margin-top:10px; font-size:13px; color:#334155;">
                         <div>
                             <strong>Berkas:</strong>
-                            <a href="/storage/${sub.file_jawaban_key}" download="${window.escapeHtml(sub.nama_file)}" class="link-blue" target="_blank" style="margin-left:4px; font-weight:600;">
+                            <a href="${window.fileHref("submissions", submitId)}" class="link-blue" target="_blank" style="margin-left:4px; font-weight:600;">
                                 ${window.escapeHtml(sub.nama_file)} (${window.formatFileSize(sub.ukuran_file)})
                             </a>
                             <span style="font-size:11px; color:#64748B; margin-left:8px;">Dikirim: ${window.formatDate(sub.tanggal_kirim)}</span>

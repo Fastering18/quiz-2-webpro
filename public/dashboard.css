@@ -2569,3 +2569,44 @@ body {
 .dc-mhs-nrp   { display: block; font-size: 10px; color: #94A3B8; margin-top: 1px; }
 .dc-file-nama { display: block; font-weight: 500; color: #0F172A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dc-file-ukuran { display: block; font-size: 10px; color: #94A3B8; margin-top: 1px; }
+
+.topbar { position: sticky; }
+.logout-form { margin: 0; }
+button.dropdown-item { width: 100%; font-family: inherit; }
+
+@media (max-width: 800px) {
+    .layout-container { flex-direction: column; padding: 10px; gap: 10px; }
+    .sidebar { width: 100%; position: static; top: auto; padding: 8px; }
+    .sidebar-nav {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .nav-item { white-space: nowrap; padding: 10px 12px; }
+    .main-content { width: 100%; padding: 16px; min-height: 0; }
+    .user-info { display: none; }
+    .topbar { padding: 10px 12px; }
+    .topbar-brand p { display: none; }
+    .topbar-left, .topbar-right { gap: 8px; }
+    .search-bar { width: 100%; max-width: 100%; }
+    .form-grid, .password-grid { grid-template-columns: 1fr; }
+    .info-grid-4, .signature-section, .stats-row, .quick-links, .report-layout, .profile-photo-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .report-history-section, .report-form-section { width: 100%; }
+    .welcome-banner { flex-direction: column; padding: 20px; gap: 12px; }
+    .banner-title { font-size: 22px; }
+    .krs-preview-card { padding: 16px; }
+    .krs-student-info { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .krs-table, .library-table-container, .table-responsive { overflow-x: auto; }
+    .krs-table-header, .krs-table-row { min-width: 520px; }
+    .lib-table-header, .lib-table-row { padding: 12px; gap: 8px; align-items: flex-start; }
+    .col-no { width: 32px; flex-shrink: 0; }
+    .col-action { width: auto; flex-shrink: 0; }
+    .page-header h2 { font-size: 20px; }
+    .modal-overlay { padding: 12px; }
+    .modal-box { max-height: 92vh; }
+    .dropdown-menu { right: 8px; }
+}

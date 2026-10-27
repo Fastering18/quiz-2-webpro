@@ -1,5 +1,5 @@
 // Service Worker for myITS Classroom (PWA)
-const CACHE_NAME = 'myits-classroom-v1';
+const CACHE_NAME = 'myits-classroom-v2';
 
 const STATIC_PRECACHE = [
     '/offline.html',
@@ -102,16 +102,15 @@ self.addEventListener('fetch', (event) => {
         url.pathname.endsWith('.webmanifest')
     ) {
         event.respondWith(
-            caches.open(CACHE_NAME).then(async (cache) => {
-                const cached = await cache.match(request);
-                const fetchPromise = fetch(request).then((networkResponse) => {
-                    if (networkResponse && networkResponse.status === 200) {
-                        cache.put(request, networkResponse.clone());
-                    }
-                    return networkResponse;
-                }).catch(() => null);
-
-                return cached || fetchPromise;
+            fetch(request).then((networkResponse) => {
+                if (networkResponse && networkResponse.status === 200) {
+                    const copy = networkResponse.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+                }
+                return networkResponse;
+            }).catch(async () => {
+                const cache = await caches.open(CACHE_NAME);
+                return cache.match(request);
             })
         );
         return;

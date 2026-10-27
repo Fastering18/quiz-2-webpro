@@ -162,6 +162,9 @@
         flex-direction: column;
         gap: 10px;
     }
+    .login-wrapper { padding: 12px; align-items: flex-start; }
+    .login-card { padding: 20px 16px; }
+    .header-text h1 { font-size: 18px; }
 }
 
 /* === TAMBAHAN STYLE UNTUK VARIASI CARD (STATE) === */

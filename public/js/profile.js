@@ -20,10 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // Load profile
-    window.apiFetch("/api/profile")
-        .then(function (res) {
-            const user = res?.profile;
+    function applyProfile(user) {
             if (!user) return;
 
             const mhs = user.mahasiswa || {};
@@ -45,13 +42,19 @@ document.addEventListener("DOMContentLoaded", function () {
             if (elWali)  elWali.value  = dosenWali;
             if (elPhone) elPhone.value = user.nomor_telepon || "";
             if (elAddr)  elAddr.value  = user.alamat_rumah || "";
-            if (elAvatar && user.foto_profil_key) {
-                elAvatar.src = "/storage/" + user.foto_profil_key;
+            if (elAvatar && user.user_id && user.foto_profil_key) {
+                elAvatar.src = "/files/avatars/" + encodeURIComponent(user.user_id);
             }
-        })
-        .catch(function (err) {
-            console.error("Gagal memuat profil:", err);
-        });
+    }
+
+    const seededProfile = window.__INITIAL_DATA__?.profile || window.__AUTH_USER__;
+    if (seededProfile) {
+        applyProfile(seededProfile);
+    } else {
+        window.apiFetch("/api/profile")
+            .then(function (res) { applyProfile(res?.profile); })
+            .catch(function (err) { console.error("Gagal memuat profil:", err); });
+    }
 
     // Contact info update form
     const contactForm = document.getElementById("contactForm");
@@ -115,7 +118,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
 
                 if (res?.profile?.foto_profil_key) {
-                    const newUrl = "/storage/" + res.profile.foto_profil_key + "?t=" + Date.now();
+                    const newUrl = "/files/avatars/" + encodeURIComponent(res.profile.user_id || "") + "?t=" + Date.now();
                     const pageAvatar = document.getElementById("profile-page-avatar");
                     const topAvatar  = document.getElementById("topbar-avatar");
                     if (pageAvatar) pageAvatar.src = newUrl;

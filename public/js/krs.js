@@ -3,11 +3,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const krsTableRows = document.getElementById("krsTableRows");
     if (!krsTableRows) return;
 
-    let currentUser = null;
-    try {
-        const raw = localStorage.getItem("user");
-        if (raw) currentUser = JSON.parse(raw);
-    } catch (e) {}
+    let currentUser = window.currentAuthUser ? window.currentAuthUser() : null;
 
     if (!currentUser) {
         try {
@@ -311,7 +307,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             const summaryBadge = document.getElementById("perwalianSummaryBadge");
 
             try {
-                const res = await window.apiFetch("/api/krs");
+                let res;
+                if (Array.isArray(window.__INITIAL_DATA__?.krs_list)) {
+                    res = { krs_list: window.__INITIAL_DATA__.krs_list };
+                    window.__INITIAL_DATA__.krs_list = null;
+                } else {
+                    res = await window.apiFetch("/api/krs");
+                }
                 const list = res?.krs_list || [];
 
                 if (summaryBadge) {
@@ -405,8 +407,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                 // Load first KRS as preview
                 if (list.length > 0) {
                     const first = list[0];
-                    const detailRes = await window.apiFetch(`/api/krs/${first.krs_id}`);
-                    renderKrsPreview(detailRes?.krs || first, detailRes?.total_sks);
+                    if (Array.isArray(first.detail_krs)) {
+                        const sks = first.detail_krs.reduce((sum, d) => sum + (d.classroom?.mata_kuliah?.sks || 0), 0);
+                        renderKrsPreview(first, sks);
+                    } else {
+                        const detailRes = await window.apiFetch(`/api/krs/${first.krs_id}`);
+                        renderKrsPreview(detailRes?.krs || first, detailRes?.total_sks);
+                    }
                 }
             } catch (err) {
                 console.error("Gagal memuat daftar perwalian:", err);
@@ -423,7 +430,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     // ========================================================
     async function loadStudentKrs() {
         try {
-            const res = await window.apiFetch("/api/krs");
+            let res;
+            if (Array.isArray(window.__INITIAL_DATA__?.krs_list)) {
+                res = { krs_list: window.__INITIAL_DATA__.krs_list };
+                window.__INITIAL_DATA__.krs_list = null;
+            } else {
+                res = await window.apiFetch("/api/krs");
+            }
             const krsList = res?.krs_list || [];
 
             if (krsList.length === 0) {
@@ -432,8 +445,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             const latestKrs = krsList[0];
-            const detailRes = await window.apiFetch(`/api/krs/${latestKrs.krs_id}`);
-            renderKrsPreview(detailRes?.krs || latestKrs, detailRes?.total_sks);
+            if (Array.isArray(latestKrs.detail_krs)) {
+                const sks = latestKrs.detail_krs.reduce((sum, d) => sum + (d.classroom?.mata_kuliah?.sks || 0), 0);
+                renderKrsPreview(latestKrs, sks);
+            } else {
+                const detailRes = await window.apiFetch(`/api/krs/${latestKrs.krs_id}`);
+                renderKrsPreview(detailRes?.krs || latestKrs, detailRes?.total_sks);
+            }
         } catch (err) {
             console.error("Gagal memuat data KRS:", err);
             krsTableRows.innerHTML = '<div style="padding:16px; color:#B42318;">Gagal memuat data KRS. Silakan coba lagi.</div>';

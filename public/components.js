@@ -3,6 +3,19 @@
 
 const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300337F'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z'/%3E%3C/svg%3E";
 
+function escHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, function (c) {
+        return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c];
+    });
+}
+
+function avatarSrc(user) {
+    if (user?.user_id && user?.foto_profil_key) {
+        return "/files/avatars/" + encodeURIComponent(user.user_id);
+    }
+    return DEFAULT_AVATAR;
+}
+
 class MyTopbar extends HTMLElement {
     connectedCallback() {
         // Read pre-hydrated user from SSR or local storage to render instantly without flickering
@@ -19,10 +32,11 @@ class MyTopbar extends HTMLElement {
             } catch (e) {}
         }
 
-        const userName = cached?.nama_lengkap || cached?.username || 'Memuat...';
-        const userCode = cached?.mahasiswa?.nrp || cached?.dosen?.nip || cached?.username || '-';
-        const userDept = cached?.mahasiswa?.departemen || cached?.dosen?.departemen || (cached?.role ? cached.role.toUpperCase() : '-');
-        const userAvatar = cached?.foto_profil_key ? ('/storage/' + cached.foto_profil_key) : DEFAULT_AVATAR;
+        const userName = escHtml(cached?.nama_lengkap || cached?.username || 'Memuat...');
+        const userCode = escHtml(cached?.mahasiswa?.nrp || cached?.dosen?.nip || cached?.username || '-');
+        const userDept = escHtml(cached?.mahasiswa?.departemen || cached?.dosen?.departemen || (cached?.role ? cached.role.toUpperCase() : '-'));
+        const userAvatar = avatarSrc(cached);
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
         this.innerHTML = `
         <header class="topbar">
@@ -67,15 +81,18 @@ class MyTopbar extends HTMLElement {
                         Profil Saya
                     </a>
                     <div class="divider"></div>
-                    <a href="#" id="btnLogout" class="dropdown-item text-danger">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                            <polyline points="16 17 21 12 16 7"/>
-                            <line x1="21" y1="12" x2="9" y2="12"/>
-                        </svg>
-                        Keluar
-                    </a>
+                    <form method="POST" action="/logout" class="logout-form" onsubmit="try{localStorage.clear();sessionStorage.clear();}catch(err){}">
+                        <input type="hidden" name="_token" value="${escHtml(csrf)}">
+                        <button type="submit" id="btnLogout" class="dropdown-item text-danger">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                <polyline points="16 17 21 12 16 7"/>
+                                <line x1="21" y1="12" x2="9" y2="12"/>
+                            </svg>
+                            Keluar
+                        </button>
+                    </form>
                 </div>
             </div>
         </header>
@@ -92,8 +109,8 @@ class MyTopbar extends HTMLElement {
             if (nameEl) nameEl.textContent = u.nama_lengkap || u.username;
             if (nrpEl) nrpEl.textContent = u.mahasiswa?.nrp || u.dosen?.nip || u.username;
             if (deptEl) deptEl.textContent = u.mahasiswa?.departemen || u.dosen?.departemen || u.role?.toUpperCase();
-            if (avatarEl && u.foto_profil_key) {
-                avatarEl.src = '/storage/' + u.foto_profil_key;
+            if (avatarEl) {
+                avatarEl.src = avatarSrc(u);
             }
         };
 
@@ -150,47 +167,11 @@ class MyTopbar extends HTMLElement {
             }
         });
 
-        // Logout listener
-        const logoutBtn = this.querySelector('#btnLogout');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
-                const authToken = localStorage.getItem('auth_token') || '';
-
-                try {
-                    await fetch('/api/logout', {
-                        method: 'POST',
-                        credentials: 'same-origin',
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                            ...(authToken ? { 'Authorization': 'Bearer ' + authToken } : {}),
-                            ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
-                        }
-                    });
-                } catch (err) {}
-
-                try {
-                    await fetch('/logout', {
-                        method: 'POST',
-                        credentials: 'same-origin',
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                            ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
-                        }
-                    });
-                } catch (err) {}
-
-                localStorage.clear();
-                sessionStorage.clear();
-                window.location.href = '/';
-            });
-        }
     }
 }
-customElements.define('my-topbar', MyTopbar);
+if (!customElements.get('my-topbar')) {
+    customElements.define('my-topbar', MyTopbar);
+}
 
 class MySidebar extends HTMLElement {
     connectedCallback() {
@@ -254,4 +235,6 @@ class MySidebar extends HTMLElement {
         this.innerHTML = `<aside class="sidebar"><nav class="sidebar-nav">${navHtml}</nav></aside>`;
     }
 }
-customElements.define('my-sidebar', MySidebar);
+if (!customElements.get('my-sidebar')) {
+    customElements.define('my-sidebar', MySidebar);
+}

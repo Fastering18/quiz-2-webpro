@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureAdmin;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -27,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Behind Render/Cloudflare: trust X-Forwarded-* so https, host and client IP (rate limits) are right.
         $middleware->trustProxies(at: '*');
+        $middleware->prepend(SecurityHeaders::class);
         $middleware->statefulApi();
         $middleware->throttleApi('api');
         $middleware->alias([

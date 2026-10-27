@@ -25,24 +25,49 @@
                 <!-- Welcome Banner -->
                 <div class="welcome-banner">
                     <div class="banner-content">
-                        <span class="banner-subtitle" id="banner-dept">Departemen Informatika</span>
-                        <h2 class="banner-title">Selamat datang kembali<br><span id="banner-name">Mahasiswa</span>!</h2>
+                        <span class="banner-subtitle" id="banner-dept">{{ $authUser->mahasiswa?->departemen ?? $authUser->dosen?->departemen ?? 'Institut Teknologi Sepuluh Nopember' }}</span>
+                        <h2 class="banner-title">Selamat datang kembali<br><span id="banner-name">{{ $authUser->nama_lengkap }}</span>!</h2>
                         <p class="banner-desc">Lanjutkan belajarmu. Cek tugas dan tonton kembali rekaman kelas di sini.</p>
                     </div>
                     <div class="banner-badge" id="banner-semester">Semester Aktif</div>
                 </div>
 
                 <!-- Stats Row -->
+                @php
+                    $summary = $initialData['summary'] ?? null;
+                    if (is_array($summary)) {
+                        $statOneLabel = 'SKS Aktif';
+                        $statOne = $summary['total_sks'] ?? 0;
+                        $statOneDesc = $statOne.' Total SKS Terdaftar';
+                        $statTwoLabel = 'Tugas Terkini';
+                        $statTwo = $summary['tugas_belum_selesai'] ?? 0;
+                        $statTwoDesc = ((int) $statTwo) > 0 ? $statTwo.' tugas belum dikerjakan' : 'Semua tugas telah diselesaikan';
+                    } elseif (isset($initialData['total_kelas_ajar'])) {
+                        $statOneLabel = 'Kelas Diampu';
+                        $statOne = $initialData['total_kelas_ajar'];
+                        $statOneDesc = 'Semester Aktif';
+                        $statTwoLabel = 'Mata Kuliah Aktif';
+                        $statTwo = count($initialData['classrooms'] ?? []);
+                        $statTwoDesc = 'Terjadwal semester ini';
+                    } else {
+                        $statOneLabel = 'Pengguna';
+                        $statOne = $initialData['stats']['pengguna']['total'] ?? '-';
+                        $statOneDesc = 'Akun terdaftar';
+                        $statTwoLabel = 'Tiket Terbuka';
+                        $statTwo = $initialData['stats']['tiket']['terbuka'] ?? '-';
+                        $statTwoDesc = 'Perlu ditinjau';
+                    }
+                @endphp
                 <div class="stats-row">
                     <div class="stat-card">
-                        <span class="stat-label">SKS Aktif</span>
-                        <span class="stat-value" id="stat-sks-aktif">-</span>
-                        <span class="stat-desc text-info" id="stat-sks-total">- Total SKS</span>
+                        <span class="stat-label">{{ $statOneLabel }}</span>
+                        <span class="stat-value" id="stat-sks-aktif">{{ $statOne }}</span>
+                        <span class="stat-desc text-info" id="stat-sks-total">{{ $statOneDesc }}</span>
                     </div>
                     <div class="stat-card">
-                        <span class="stat-label">Tugas Terkini</span>
-                        <span class="stat-value" id="stat-tugas-count">-</span>
-                        <span class="stat-desc text-danger" id="stat-tugas-desc">Tugas belum selesai</span>
+                        <span class="stat-label">{{ $statTwoLabel }}</span>
+                        <span class="stat-value" id="stat-tugas-count">{{ $statTwo }}</span>
+                        <span class="stat-desc text-danger" id="stat-tugas-desc">{{ $statTwoDesc }}</span>
                     </div>
                 </div>
 

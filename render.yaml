@@ -24,20 +24,38 @@ services:
         value: pgsql
       - key: DB_URL
         sync: false
-      # The browser UI needs persistent sessions (table `sessions` exists)
+      # File sessions vanish when the Render disk restarts, which leaves logout and CSRF stuck.
       - key: SESSION_DRIVER
-        value: file
+        value: database
+      - key: SESSION_SECURE_COOKIE
+        value: "true"
       - key: CACHE_STORE
-        value: file
+        value: database
+      - key: FILESYSTEM_DISK
+        value: s3
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_DEFAULT_REGION
+        sync: false
+      - key: AWS_BUCKET
+        sync: false
+      - key: AWS_ENDPOINT
+        sync: false
+      - key: AWS_USE_PATH_STYLE_ENDPOINT
+        value: "true"
       - key: QUEUE_CONNECTION
         value: sync
-      # Forgot-password mail over plain SMTP. MAIL_MAILER=log (default) only logs the mail.
-      - key: MAIL_MAILER # unset = log; set to smtp together with the credentials below
+      # Resend API first, then direct delivery to the recipient mail server.
+      - key: MAIL_MAILER
+        value: failover
+      - key: RESEND_API_KEY
         sync: false
       - key: MAIL_HOST
         sync: false
       - key: MAIL_PORT
-        value: "587"
+        sync: false
       - key: MAIL_SCHEME
         sync: false
       - key: MAIL_USERNAME
@@ -50,3 +68,9 @@ services:
         value: Portal Quiz 2 WebPro
       - key: FRONTEND_URL
         sync: false
+      - key: OCTANE_SERVER
+        value: frankenphp
+      - key: OCTANE_HTTPS
+        value: "true"
+      - key: OCTANE_WORKERS
+        value: "1"

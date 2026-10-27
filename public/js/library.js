@@ -6,11 +6,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     if (!libraryTableBody) return;
 
-    let currentUser = null;
-    try {
-        const raw = localStorage.getItem("user");
-        if (raw) currentUser = JSON.parse(raw);
-    } catch (e) {}
+    let currentUser = window.currentAuthUser ? window.currentAuthUser() : null;
 
     if (!currentUser) {
         try {
@@ -120,7 +116,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         libraryTableBody.innerHTML = list.map(function (b, idx) {
-            const downloadUrl = b.file_dokumen_key ? `/storage/${b.file_dokumen_key}` : "#";
+            const downloadUrl = b.buku_id ? window.fileHref("library", b.buku_id) : "#";
 
             const deleteBtnHtml = canManageBooks ? `
                 <button type="button" class="btn-action-small btn-action-danger btn-delete-buku" data-id="${b.buku_id}" data-title="${window.escapeHtml(b.judul_buku)}">

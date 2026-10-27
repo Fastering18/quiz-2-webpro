@@ -31,7 +31,7 @@
 
                     <!-- Foto Profil -->
                     <div class="profile-photo-section">
-                        <img src="https://placehold.co/80x80" alt="Foto Profil" class="profile-large-avatar" id="profile-page-avatar">
+                        <img src="{{ $authUser->foto_profil_key ? route('files.show', ['kind' => 'avatars', 'id' => $authUser->user_id]) : '/svg/User.svg' }}" alt="Foto Profil" class="profile-large-avatar" id="profile-page-avatar">
                         <div class="photo-actions">
                             <input type="file" id="avatarFileInput" accept="image/png,image/jpeg,image/webp" style="display:none;">
                             <button type="button" class="btn-primary-small" id="btnChangeAvatar">Ganti Foto</button>
@@ -44,23 +44,23 @@
                     <div class="form-grid">
                         <div class="input-group">
                             <label for="profile-name">Nama Lengkap</label>
-                            <input type="text" id="profile-name" value="Memuat..." class="input-readonly" disabled>
+                            <input type="text" id="profile-name" value="{{ $authUser->nama_lengkap }}" class="input-readonly" disabled>
                         </div>
                         <div class="input-group">
                             <label for="profile-nrp">NRP / NIP</label>
-                            <input type="text" id="profile-nrp" value="Memuat..." class="input-readonly" disabled>
+                            <input type="text" id="profile-nrp" value="{{ $authUser->mahasiswa?->nrp ?? $authUser->dosen?->nip ?? $authUser->username }}" class="input-readonly" disabled>
                         </div>
                         <div class="input-group">
                             <label for="profile-dept">Departemen</label>
-                            <input type="text" id="profile-dept" value="Memuat..." class="input-readonly" disabled>
+                            <input type="text" id="profile-dept" value="{{ $authUser->mahasiswa?->departemen ?? $authUser->dosen?->departemen ?? strtoupper((string) $authUser->role) }}" class="input-readonly" disabled>
                         </div>
                         <div class="input-group">
                             <label for="profile-email">Email</label>
-                            <input type="email" id="profile-email" value="Memuat..." class="input-readonly" disabled>
+                            <input type="email" id="profile-email" value="{{ $authUser->email }}" class="input-readonly" disabled>
                         </div>
                         <div class="input-group">
                             <label for="profile-dosen-wali">Dosen Wali</label>
-                            <input type="text" id="profile-dosen-wali" value="Memuat..." class="input-readonly" disabled>
+                            <input type="text" id="profile-dosen-wali" value="{{ $authUser->mahasiswa?->dosenWali?->user?->nama_lengkap ?? '-' }}" class="input-readonly" disabled>
                         </div>
                     </div>
 
@@ -70,11 +70,11 @@
                         <div class="form-grid">
                             <div class="input-group">
                                 <label for="phone">Nomor Telepon</label>
-                                <input type="text" id="phone" placeholder="08xx-xxxx-xxxx">
+                                <input type="text" id="phone" value="{{ $authUser->nomor_telepon }}" placeholder="08xx-xxxx-xxxx">
                             </div>
                             <div class="input-group">
                                 <label for="address">Alamat Rumah</label>
-                                <input type="text" id="address" placeholder="Jl. Raya ITS, Surabaya">
+                                <input type="text" id="address" value="{{ $authUser->alamat_rumah }}" placeholder="Jl. Raya ITS, Surabaya">
                             </div>
                         </div>
 

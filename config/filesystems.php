@@ -59,6 +59,9 @@ return [
             // Non-AWS S3 providers (e.g. Neon) reject the SDK's default CRC checksums
             'request_checksum_calculation' => env('AWS_REQUEST_CHECKSUM_CALCULATION', 'when_required'),
             'response_checksum_validation' => env('AWS_RESPONSE_CHECKSUM_VALIDATION', 'when_required'),
+            'http' => [
+                'verify' => env('AWS_CA_BUNDLE', true),
+            ],
             'throw' => false,
             'report' => false,
         ],

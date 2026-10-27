@@ -60,7 +60,7 @@
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                                 <input type="text" placeholder="Cari judul buku atau penulis..." id="searchInput">
                             </div>
-                            <button class="btn-primary-small d-none" id="btnOpenModalUploadBuku" type="button" style="white-space:nowrap;">
+                            <button class="btn-primary-small {{ in_array(auth()->user()?->role, ['dosen', 'admin'], true) ? '' : 'd-none' }}" id="btnOpenModalUploadBuku" type="button" style="white-space:nowrap;">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                                 + Unggah Buku Baru
                             </button>
@@ -79,7 +79,24 @@
 
                         <!-- Container Baris Buku Dinamis -->
                         <div id="libraryTableBody">
-                            <div style="padding: 20px; text-align: center; color: #64748B;">Memuat koleksi perpustakaan...</div>
+                            @forelse (($initialData['books']['data'] ?? []) as $index => $book)
+                                <div class="lib-table-row">
+                                    <div class="col-no">{{ ($initialData['books']['from'] ?? 1) + $index }}</div>
+                                    <div class="col-title">
+                                        <div>
+                                            <span class="book-name">{{ $book['judul_buku'] }}</span>
+                                            <span style="display:block; font-size:12px; color:#64748B; margin-top:2px;">
+                                                Penulis: {{ $book['penulis'] }}@if(!empty($book['tahun'])) • Tahun {{ $book['tahun'] }}@endif ({{ $book['kategori'] }})
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-action" style="display:flex; justify-content:flex-end; gap:8px; align-items:center;">
+                                        <a href="{{ route('files.show', ['kind' => 'library', 'id' => $book['buku_id']]) }}" class="btn-primary-small" style="text-decoration:none; padding:6px 12px; font-size:12px;">Unduh</a>
+                                    </div>
+                                </div>
+                            @empty
+                                <div style="padding: 20px; text-align: center; color: #64748B;">Tidak ada buku yang ditemukan.</div>
+                            @endforelse
                         </div>
 
                     </div>

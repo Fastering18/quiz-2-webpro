@@ -18,9 +18,9 @@ class FileStorage
 
     /** kind => [max size in KB, allowed extensions] */
     public const KINDS = [
-        'materials' => [10240, ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md', 'zip', 'rar', '7z', 'png', 'jpg', 'jpeg', 'mp4', 'c', 'cpp', 'java', 'py']],
-        'submissions' => [10240, ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md', 'zip', 'rar', '7z', 'png', 'jpg', 'jpeg', 'c', 'cpp', 'java', 'py', 'sql']],
-        'library' => [10240, ['pdf', 'epub', 'doc', 'docx', 'ppt', 'pptx', 'txt', 'zip']],
+        'materials' => [20480, ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md', 'zip', 'rar', '7z', 'png', 'jpg', 'jpeg', 'mp4', 'c', 'cpp', 'java', 'py']],
+        'submissions' => [20480, ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'md', 'zip', 'rar', '7z', 'png', 'jpg', 'jpeg', 'c', 'cpp', 'java', 'py', 'sql']],
+        'library' => [51200, ['pdf', 'epub', 'doc', 'docx', 'ppt', 'pptx', 'txt', 'zip']],
         'reports' => [5120, ['pdf', 'png', 'jpg', 'jpeg', 'txt', 'zip', 'doc', 'docx']],
         'avatars' => [2048, ['png', 'jpg', 'jpeg', 'webp']],
     ];

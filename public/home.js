@@ -114,9 +114,16 @@ document.addEventListener("DOMContentLoaded", function() {
         if (!value) return;
         btn.disabled = true;
         btn.innerText = "Mengirim...";
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || "";
         fetch("/api/forgot-password", {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            credentials: "same-origin",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+                ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {})
+            },
             body: JSON.stringify(value.includes("@") ? { email: value } : { username: value })
         }).then(async res => {
             const data = await res.json().catch(() => ({}));

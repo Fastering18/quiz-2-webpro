@@ -87,8 +87,24 @@
     }
 
     // Expose helpers globally
+    function fileHref(kind, id) {
+        if (!kind || id === undefined || id === null || id === "") return "#";
+        return "/files/" + encodeURIComponent(kind) + "/" + encodeURIComponent(String(id));
+    }
+
+    function currentAuthUser() {
+        if (window.__AUTH_USER__) return window.__AUTH_USER__;
+        try {
+            const raw = localStorage.getItem("user");
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return null;
+    }
+
     window.apiFetch = apiFetch;
     window.escapeHtml = escapeHtml;
+    window.fileHref = fileHref;
+    window.currentAuthUser = currentAuthUser;
     window.formatFileSize = formatFileSize;
     window.formatDate = formatDate;
     window.getCsrfToken = getCsrfToken;

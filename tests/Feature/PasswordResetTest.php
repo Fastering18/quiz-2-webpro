@@ -82,7 +82,7 @@ class PasswordResetTest extends TestCase
         $user = User::where('role', 'dosen')->orderBy('user_id')->first();
 
         $this->postJson('/api/forgot-password', ['email' => $user->email])
-            ->assertOk()
+            ->assertStatus(503)
             ->assertJsonStructure(['message']);
     }
 

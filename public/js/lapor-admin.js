@@ -6,11 +6,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const reportHistoryList = document.getElementById("reportHistoryList");
     const reportFormSection = document.querySelector(".report-form-section");
 
-    let currentUser = null;
-    try {
-        const raw = localStorage.getItem("user");
-        if (raw) currentUser = JSON.parse(raw);
-    } catch (e) {}
+    let currentUser = window.currentAuthUser ? window.currentAuthUser() : null;
 
     if (!currentUser) {
         try {
@@ -126,10 +122,22 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Load and render report cards
     async function loadReports() {
         if (!reportHistoryList) return;
-        reportHistoryList.innerHTML = '<div style="padding:16px; color:#64748B; font-size:13px;">Memuat daftar laporan...</div>';
+
+        let res;
+        if (window.__INITIAL_DATA__ && Array.isArray(window.__INITIAL_DATA__.data)) {
+            res = window.__INITIAL_DATA__;
+            window.__INITIAL_DATA__ = null;
+        } else {
+            reportHistoryList.innerHTML = '<div style="padding:16px; color:#64748B; font-size:13px;">Memuat daftar laporan...</div>';
+            try {
+                res = await window.apiFetch("/api/reports");
+            } catch (err) {
+                reportHistoryList.innerHTML = '<div style="padding:16px; color:#B42318; font-size:13px;">Gagal memuat laporan.</div>';
+                return;
+            }
+        }
 
         try {
-            const res = await window.apiFetch("/api/reports");
             const reports = res?.data || [];
 
             if (reports.length === 0) {
@@ -203,7 +211,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                             <span class="detail-cat">Kategori: ${window.escapeHtml(rep.kategori_modul)}</span>
                         </div>
                         <p class="detail-text" style="white-space:pre-line;">${window.escapeHtml(rep.deskripsi_kendala)}</p>
-                        ${rep.lampiran_bukti_key ? `<p style="font-size:12px; margin-bottom:12px;"><a href="/storage/${rep.lampiran_bukti_key}" target="_blank" class="link-blue">Unduh Lampiran Bukti</a></p>` : ""}
+                        ${rep.lampiran_bukti_key ? `<p style="font-size:12px; margin-bottom:12px;"><a href="${window.fileHref("reports", rep.tiket_id)}" target="_blank" class="link-blue">Unduh Lampiran Bukti</a></p>` : ""}
                         ${adminReplySection}
                     </div>
                 </div>`;

@@ -1,10 +1,6 @@
 // public/js/admin-panel.js - Admin Panel management logic
 document.addEventListener("DOMContentLoaded", async function () {
-    let currentUser = null;
-    try {
-        const raw = localStorage.getItem("user");
-        if (raw) currentUser = JSON.parse(raw);
-    } catch (e) {}
+    let currentUser = window.currentAuthUser ? window.currentAuthUser() : null;
 
     if (!currentUser || currentUser.role !== "admin") {
         try {
@@ -71,20 +67,30 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     // 1. STATS OVERVIEW
+    function paintStats(st) {
+        const usr = st.pengguna || {};
+        const totalUsers = document.getElementById("statTotalUsers");
+        if (!totalUsers) return;
+        totalUsers.textContent = usr.total ?? "-";
+        document.getElementById("statUserBreakdown").textContent = `${usr.mahasiswa || 0} Mhs • ${usr.dosen || 0} Dosen • ${usr.admin || 0} Admin`;
+        document.getElementById("statTotalMk").textContent = st.mata_kuliah ?? "-";
+        document.getElementById("statTotalKelas").textContent = st.kelas ?? "-";
+        document.getElementById("statPendingKrs").textContent = st.krs?.menunggu ?? 0;
+        document.getElementById("statTotalKrs").textContent = `Total ${st.krs?.total || 0} KRS`;
+        document.getElementById("statOpenTickets").textContent = st.tiket?.terbuka ?? 0;
+        document.getElementById("statTotalTickets").textContent = `Total ${st.tiket?.total || 0} Tiket`;
+    }
+
     async function loadStats() {
         try {
+            if (window.__INITIAL_DATA__?.stats) {
+                const seeded = window.__INITIAL_DATA__.stats;
+                window.__INITIAL_DATA__.stats = null;
+                paintStats(seeded);
+                return;
+            }
             const res = await window.apiFetch("/api/admin/stats");
-            const st = res?.stats || {};
-            const usr = st.pengguna || {};
-
-            document.getElementById("statTotalUsers").textContent = usr.total ?? "-";
-            document.getElementById("statUserBreakdown").textContent = `${usr.mahasiswa || 0} Mhs • ${usr.dosen || 0} Dosen • ${usr.admin || 0} Admin`;
-            document.getElementById("statTotalMk").textContent = st.mata_kuliah ?? "-";
-            document.getElementById("statTotalKelas").textContent = st.kelas ?? "-";
-            document.getElementById("statPendingKrs").textContent = st.krs?.menunggu ?? 0;
-            document.getElementById("statTotalKrs").textContent = `Total ${st.krs?.total || 0} KRS`;
-            document.getElementById("statOpenTickets").textContent = st.tiket?.terbuka ?? 0;
-            document.getElementById("statTotalTickets").textContent = `Total ${st.tiket?.total || 0} Tiket`;
+            paintStats(res?.stats || {});
         } catch (err) {
             console.error("Gagal memuat stats:", err);
         }
@@ -127,10 +133,19 @@ document.addEventListener("DOMContentLoaded", async function () {
         const q = document.getElementById("searchUserInput")?.value.trim() || "";
         const role = document.getElementById("filterUserRole")?.value || "";
 
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:#64748B;">Memuat data pengguna...</td></tr>';
+        let res = null;
+        const canHydrate = page === 1 && q === "" && role === "" && window.__INITIAL_DATA__?.users;
+        if (!canHydrate) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px; color:#64748B;">Memuat data pengguna...</td></tr>';
+        }
 
         try {
-            const res = await window.apiFetch(`/api/admin/users?page=${page}&q=${encodeURIComponent(q)}&role=${encodeURIComponent(role)}`);
+            if (canHydrate) {
+                res = window.__INITIAL_DATA__.users;
+                window.__INITIAL_DATA__.users = null;
+            } else {
+                res = await window.apiFetch(`/api/admin/users?page=${page}&q=${encodeURIComponent(q)}&role=${encodeURIComponent(role)}`);
+            }
             const items = res?.data || [];
 
             if (items.length === 0) {

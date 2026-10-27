@@ -7,9 +7,16 @@ document.addEventListener("DOMContentLoaded", function () {
         alertBox.classList.add("d-none");
         const btn = form.querySelector("button[type='submit']");
         btn.disabled = true;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || "";
         fetch("/api/reset-password", {
             method: "POST",
-            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            credentials: "same-origin",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+                ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {})
+            },
             body: JSON.stringify({
                 email: document.getElementById("r-email").value.trim(),
                 token: document.getElementById("r-token").value.trim(),
