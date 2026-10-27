@@ -50,6 +50,11 @@ class AppServiceProvider extends ServiceProvider
 
             // Resend API first. If it throws, Laravel tries direct delivery to the recipient server.
             config(['mail.default' => 'failover']);
+            // Worker logs must reach the container stderr that Render shows. A file channel stays inside the box.
+            config(['logging.default' => 'stderr']);
+            if (blank(config('services.resend.key'))) {
+                error_log('Password reset mail: RESEND_API_KEY is empty, and MAIL_PASSWORD is not a Resend key.');
+            }
         }
 
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->getAuthIdentifier() ?: $request->ip()));

@@ -65,7 +65,7 @@ class PasswordResetController extends Controller
                 ));
             }
         } catch (\Throwable $e) {
-            Log::error('Forgot-password mail failed: '.$e->getMessage());
+            $this->reportMailFailure($e);
 
             return response()->json([
                 'message' => 'Gagal mengirim email pemulihan. Coba lagi beberapa saat lagi.',
@@ -73,6 +73,26 @@ class PasswordResetController extends Controller
         }
 
         return response()->json(['message' => self::GENERIC_MESSAGE]);
+    }
+
+    private function reportMailFailure(\Throwable $exception): void
+    {
+        $parts = [$exception::class.': '.$exception->getMessage()];
+        $previous = $exception->getPrevious();
+        while ($previous instanceof \Throwable) {
+            $parts[] = $previous::class.': '.$previous->getMessage();
+            $previous = $previous->getPrevious();
+        }
+
+        $text = 'Forgot-password mail failed: '.implode(' | ', $parts);
+        $text = (string) preg_replace('/re_[A-Za-z0-9_]+/', 're_redacted', $text);
+
+        try {
+            Log::channel('stderr')->error($text);
+        } catch (\Throwable) {
+            Log::error($text);
+        }
+        error_log($text);
     }
 
     /**

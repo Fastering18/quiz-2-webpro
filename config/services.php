@@ -19,7 +19,8 @@ return [
     ],
 
     'resend' => [
-        'key' => env('RESEND_API_KEY'),
+        // Render was given the Resend key as MAIL_PASSWORD before RESEND_API_KEY existed.
+        'key' => env('RESEND_API_KEY') ?: (str_starts_with((string) env('MAIL_PASSWORD'), 're_') ? env('MAIL_PASSWORD') : null),
     ],
 
     'ses' => [
